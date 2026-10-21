@@ -109,6 +109,10 @@ A new cloud database starts with no challenges. Browser XP and drafts are origin
 
 ## Git deployment workflow
 
+Private repository: https://github.com/LongLong10203/bond-lab-hkdse
+
+The repository is connected to Vercel. Pushes to `main` trigger production deployments; the production site is public, and preview deployments remain restricted.
+
 This directory is the source for the Vercel project `bond-lab-hkdse` in `longs-projects-0240e8f8`. The separate ChatGPT Sites checkout stays excluded from this repository.
 
 Vercel production uses the Neon database `bond-lab-postgres` in Singapore. Database credentials are managed through the Vercel Marketplace connection, never Git. Before publishing changes, run `npm test` and `npm run build`. The Vercel build applies checked-in migrations and builds the app.
