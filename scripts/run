@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+cd "$(dirname "$0")/.."
+if [ -x "$PWD/.runtime/node-v24.19.0-darwin-arm64/bin/node" ]; then
+  PATH="$PWD/.runtime/node-v24.19.0-darwin-arm64/bin:$PATH"
+  export PATH
+fi
+if ! command -v npm >/dev/null 2>&1; then
+  echo 'Install Node.js LTS from https://nodejs.org/en/download, then try again.'
+  exit 1
+fi
+exec npm "$@"

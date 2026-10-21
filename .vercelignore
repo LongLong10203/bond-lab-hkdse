@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.vercel
+.env
+.env.*
+.runtime
+.postgres
+sites
+docs
+tests
+*.tsbuildinfo
+.DS_Store
+
+.agents
+AGENTS.md
+skills-lock.json

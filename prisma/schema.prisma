@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Challenge {
+  id        String   @id @default(cuid())
+  seed      Int
+  mode      String
+  family    String
+  version   String
+  createdAt DateTime @default(now())
+}
