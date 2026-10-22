@@ -1,120 +1,90 @@
 # Bond Lab
 
-English-language HKDSE organic chemistry practice with three modes: build a product, choose reaction conditions, and plan a 2–4-step synthesis. Next.js + TypeScript, PostgreSQL + Prisma. Guest scores and unfinished drafts stay in this browser; no account is required.
+An interactive organic chemistry practice game for HKDSE learners. Build molecules, choose reaction conditions, and plan multi-step syntheses with immediate feedback.
 
-## Run the existing installation
+**[Play Bond Lab](https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app)** — no account required.
 
-From `/Users/long/test/bondlab`, keep these two terminals open:
+## About the project
 
-```sh
-# Terminal 1: persistent local PostgreSQL
-./scripts/run run db:start
-```
+This project was generated with **ChatGPT Astra 6**, with direction and iterative feedback from Long.
 
-```sh
-# Terminal 2: generate the database client, apply migrations, start the app
-./scripts/run run db:generate
-./scripts/run run db:migrate
-./scripts/run run dev
-```
+Bond Lab provides three practice modes:
 
-Open **http://127.0.0.1:3000**. Stop each process with Ctrl-C in its terminal. To restart, run the same commands; PostgreSQL data survives. Check for an existing listener before starting another copy:
+- **Build the product:** draw the product from the starting compound and supplied conditions.
+- **Find the conditions:** choose reagents and conditions for a given transformation.
+- **Plan a synthesis:** construct a 2–4-step route, choose conditions and any organic co-reactants for each step, and move freely between steps. The final product is supplied.
 
-```sh
-lsof -nP -iTCP:3000 -iTCP:54329 -sTCP:LISTEN
-```
+The molecule editor supports dragging, flexible arrangement, animated changes, and reduced-motion preferences. Harder questions earn more XP, and each level requires more XP than the previous one. Worked solutions remain available; viewing one removes that question’s XP reward.
 
-The existing project includes Node **24.19.0** for Apple Silicon in `.runtime/node-v24.19.0-darwin-arm64/`. Its official download checksum was verified during initial setup. `scripts/run` puts that runtime on PATH and invokes npm; it falls back to system npm when absent. No system-wide Node or PostgreSQL installation is required here. On another computer, install a supported Node LTS runtime from [nodejs.org](https://nodejs.org/en/download), then use the same wrapper.
+Questions are generated from bounded chemistry rules and checked on the server. This is an independent educational project, not an official HKEAA resource. It covers selected HKDSE organic chemistry topics, not the entire syllabus or every valid reaction. See the [chemistry scope](docs/chemistry-scope.md) for supported transformations and limitations. Teacher review is recommended before classroom assessment; game XP does not represent examination marks.
 
-## Fresh checkout / database setup
+## Saved progress and data
 
-```sh
-./scripts/run ci
-cp .env.example .env   # only when .env does not already exist
-./scripts/run run db:start
-# In another terminal:
-./scripts/run run setup
-./scripts/run run dev
-```
+XP and unfinished answers are saved in the current browser. Synthesis drafts retain each step’s drawing and conditions when navigating or correcting answers. Progress is not synchronised across devices or site addresses, and clearing browser storage removes it.
 
-`embedded-postgres` starts a real PostgreSQL 18 server on `127.0.0.1:54329`, database `bondlab`. Development user/password are both `bondlab`. Data is in `.postgres/data`; sockets are in `.postgres/socket`. These directories, `.env`, the local runtime and generated files are ignored by Git. Do not delete `.postgres/data` to troubleshoot a startup failure.
+The application database stores challenge IDs, seeds, modes, reaction families, generator versions, and creation times. Answers are regenerated on the server. The game does not require a player account.
 
-A restricted execution sandbox can block opening ports or PostgreSQL shared memory. Run the local startup commands in a normal Terminal or through an approved local execution permission. If a port is occupied, reuse the existing server or stop it from its original terminal. Startup does not require an administrator password.
+## Run locally
 
-To use an independently installed PostgreSQL server, set `DATABASE_URL` in `.env` to its connection string and run `db:generate` and `db:migrate`. The bundled server credentials are for localhost development, not public hosting.
+Requirements: **Node.js 24.x**, npm, and PostgreSQL. A local PostgreSQL launcher is included through `embedded-postgres`; alternatively, use your own PostgreSQL server.
 
-## Checks and production preview
+From a checkout of this repository:
 
 ```sh
-./scripts/run test
-./scripts/run run typecheck
-# Requires both app and PostgreSQL running, using the same .env:
-./scripts/run run test:integration
-./scripts/run run build
-# Stop the dev app before using port 3000 for this:
-./scripts/run run start
+npm ci
+cp .env.example .env
+npm run db:start
 ```
 
-Unit tests do not require PostgreSQL. Integration tests use actual HTTP endpoints and Prisma, verify saved-question regeneration and all three grading modes, and delete only the challenge records they create. Set `TEST_BASE_URL=http://127.0.0.1:3001` if the app uses a different local port. The test runner rejects non-local HTTP targets.
+Only copy `.env.example` when `.env` does not already exist. Keep the database terminal open. In a second terminal, from the same directory:
 
-## How it works
+```sh
+npm run setup
+npm run dev
+```
 
-- `src/chemistry/types.ts`, `molecules.ts`: bounded compound descriptors, names, atoms and bonds.
-- `src/chemistry/rules.ts`: valid transformations, alternative procedures, condition labels and generator version.
-- `src/chemistry/generate.ts`: deterministic seeded question selection and synthesis route search.
-- `src/chemistry/check.ts`, `grading.ts`: valence, connectivity, polymer boundaries, conditions and route grading.
-- `src/components/`: game UI, SVG molecule editor, condition selector and molecule display.
-- `src/app/api/`: challenge creation and submission routes; `src/lib/` provides validation and database access.
-- `prisma/`: schema and checked-in migrations; `src/generated/prisma/` is generated by Prisma.
-- `tests/`: chemistry/input regression checks and `integration/` HTTP/database checks.
+Open [localhost:3000](http://127.0.0.1:3000). Stop the processes with Ctrl-C when finished.
+
+The local database runs on `127.0.0.1:54329`, with database name, username, and password all set to `bondlab`. These credentials are for local development only. Data persists in `.postgres/data`, which is excluded from Git. To use another PostgreSQL server, set `DATABASE_URL` in `.env`, skip `db:start`, and run the remaining setup commands.
+
+## Development checks
+
+```sh
+npm test
+npm run typecheck
+npm run build
+```
+
+With both the app and its development database running, also run:
+
+```sh
+npm run test:integration
+```
+
+Unit tests do not require a database. Integration tests exercise challenge creation, saved-question regeneration, and grading through the local HTTP API, then remove the records they created. Set `TEST_BASE_URL` if the local app uses a different port. The integration runner rejects non-local URLs.
+
+For a local production preview, stop the development app, run `npm run build`, and then `npm start` with PostgreSQL still running.
+
+## Project structure
+
+Built with **Next.js, React, TypeScript, PostgreSQL, and Prisma**.
+
+- `src/chemistry/`: molecules, reaction rules, question generation, grading, and rewards.
+- `src/components/`: game interface, molecule editor, and condition selector.
+- `src/app/api/`: challenge creation and submission endpoints.
+- `src/lib/`: database access, validation, and saved-practice handling.
+- `prisma/`: database schema and migrations.
+- `tests/`: chemistry, input, and integration checks.
 - `docs/`: chemistry scope and verification notes.
 
-PostgreSQL stores only the challenge ID, seed, mode, family, generator version and creation time. Answers are regenerated on the server. Browser scores use `bond-lab-progress-v1`; per-mode drafts use `bond-lab-sessions-v2`. Reload restores the question, every step, drawings and conditions. Organic co-reactant checkboxes in the left panel apply only to the current synthesis step and are saved with its conditions. Missing, wrong or extra co-reactants fail grading. Changing an earlier step keeps later work; the final synthesis product is supplied automatically. Drafts are local to this browser and are not synchronised across devices. Incompatible generator-version drafts are discarded; the 2026.3 → 2026.4 update preserves drawings and award flags.
+When changing reaction rules, seeded question generation, or grading semantics, update the generator version in `src/chemistry/rules.ts` and handle saved-question compatibility deliberately. Add checks for accepted answers and incorrect near-misses. See [verification notes](docs/verification.md) for existing coverage and review needs.
 
-The editor has gentle zigzag arrangement for connected atoms; loose atoms stay where placed. It supports, direct atom dragging, animated additions/removals/bonds and reduced-motion support. Turn off Flexible layout to retain manually arranged positions. Steps have direct navigation and can always be corrected and checked again. Viewing a solution allows continued practice but removes that challenge’s XP reward. Single reactions award 20/35/50 XP by complexity; 2/3/4-step routes award 50/80/110 XP. Level costs increase by 50 XP each time: 100, 150, 200, 250, …, and each challenge earns XP once.
+## Deployment
 
-## Extending the generator
+The repository is connected to Vercel: pushes to `main` trigger production deployments. The production game is public; preview deployments require Vercel access.
 
-1. Add or extend a bounded compound representation and its name/drawing if needed.
-2. Add transformations to `reactions()` with complete alternative condition sets, a precise requested-product instruction, hint and explanation. Add starters deliberately; enumeration order affects seeds.
-3. Add tests for valence, conserved atoms where applicable, isomer/charge distinctions, acceptable alternatives and invalid near-misses. Verify the editor can construct every requested answer.
-4. **Bump `VERSION` in `rules.ts` whenever rules, enumeration, seeded selection or grading semantics change.** Current version: `2026.4`. Version `2026.3` uses identical seeds/routes and is explicitly supported so existing drafts survive; synthesis co-reactants must now be selected in their individual steps. Older incompatible saved questions return HTTP 409 and must be replaced with a new challenge. Historical generator implementations are not retained.
-5. Run unit tests, integration tests, typecheck and build. Recalculate `coverage()`; do not manually maintain a question bank or invent counts.
+Vercel builds the project root using Node.js 24 and `npm run build:vercel`. This applies checked-in Prisma migrations before building the application. Production uses Neon PostgreSQL through the Vercel Marketplace.
 
-## Scope
+For another deployment, configure server-only `DATABASE_URL` and, when available, `DATABASE_URL_UNPOOLED` environment variables. The app uses the pooled connection; migrations prefer the unpooled connection. Keep credentials in environment settings, never in Git. Local environment files, database data, runtime files, and Vercel connection files are excluded from version control.
 
-The current generator enumerates **390 reaction variants from 35 rule variants** across 11 reaction families (plus the “All reactions” filter). These are bounded examples, not 390 independently authored lessons or a complete organic reaction predictor. See [chemistry scope](docs/chemistry-scope.md) for supported families, curriculum sources and omissions, and [verification](docs/verification.md) for checks and remaining review needs.
-
-This is a local educational prototype. Teacher content review and public hosting hardening remain outstanding. Game XP is not an official HKDSE mark.
-
-## Hosted game
-
-Public URL: https://bond-lab-hkdse.mistypuppy128.chatgpt.site
-
-The Sites deployment source is in `sites/bond-lab/`, with its identity in `sites/bond-lab/.openai/hosting.json`. Use that project for hosted updates. It retains the game and server-side checking, with reproducible question IDs instead of local PostgreSQL. The public origin has separate browser-local XP and drafts. Changes to the original `src/` do not automatically update the hosted copy.
-
-## Vercel deployment with PostgreSQL
-
-Live site: https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app
-
-Production is public; preview deployments require Vercel access.
-
-Deploy the project root (not `sites/bond-lab`). Vercel uses Node 24 and `npm run build:vercel`, which applies the checked-in Prisma migrations before building Next.js.
-
-Connect a Neon Postgres resource through the Vercel Marketplace. The server uses `DATABASE_URL`; migrations prefer `DATABASE_URL_UNPOOLED` when provided. Configure these as server-only environment variables in the intended Vercel environment. Never use the localhost example connection string for hosting.
-
-`.vercelignore` excludes local database files, environment files, bundled runtime, and the separate Sites deployment. The Vercel connection and cloud credentials belong in ignored `.vercel/` or local environment files.
-
-A new cloud database starts with no challenges. Browser XP and drafts are origin-specific, so progress from the ChatGPT Sites URL will not automatically appear at the Vercel URL.
-
-## Git deployment workflow
-
-Private repository: https://github.com/LongLong10203/bond-lab-hkdse
-
-The repository is connected to Vercel. Pushes to `main` trigger production deployments; the production site is public, and preview deployments remain restricted.
-
-This directory is the source for the Vercel project `bond-lab-hkdse` in `longs-projects-0240e8f8`. The separate ChatGPT Sites checkout stays excluded from this repository.
-
-Vercel production uses the Neon database `bond-lab-postgres` in Singapore. Database credentials are managed through the Vercel Marketplace connection, never Git. Before publishing changes, run `npm test` and `npm run build`. The Vercel build applies checked-in migrations and builds the app.
-
-The production database is connected only to the production environment. Preview deployments need a separate test database connection before they can build and run the game. Do not share the production database with unreviewed preview builds.
+The current database connection is configured for production only. Preview deployments need their own test database connection to build and run. Review migrations before pushing because production deployments apply them automatically.

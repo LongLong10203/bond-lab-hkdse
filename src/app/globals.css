@@ -45,3 +45,11 @@
 .co-reactant-choice{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;margin-top:10px;padding:7px 12px;border:1px solid #d1dec0;border-radius:7px;color:#476435;background:#fafcf6;cursor:pointer}
 .co-reactant-choice:has(input:checked){background:#e2edcf;border-color:#9bb77b}
 .co-reactant-choice input{accent-color:#6f8c43;width:15px;height:15px;margin:0}
+
+/* Make navigation and solution actions easy to find without overwhelming the workspace. */
+.step-next-button,.solution-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:11px 16px;border:1px solid #8b9e74;border-radius:7px;font-size:12px;font-weight:600;color:#40572f;transition:background-color .15s,border-color .15s,box-shadow .15s}
+.step-next-button{background:#e0ebce;border-color:#90a96d;box-shadow:0 2px 4px #40572f12}
+.solution-button{background:#f4f7ec}
+.step-next-button:hover:not(:disabled){background:#d1e2b7;border-color:#718c4c;box-shadow:0 3px 7px #40572f20}
+.solution-button:hover:not(:disabled){background:#e8efdc;border-color:#708851}
+@media(max-width:380px){.step-next-button,.solution-button{padding:10px 12px}.compact-lab .answer-actions{padding:14px 12px}}
