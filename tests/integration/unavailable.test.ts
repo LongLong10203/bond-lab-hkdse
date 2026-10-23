@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 // This worker owns an independent Prisma client pointed at an unavailable local
 // port. The real preview database is neither stopped nor modified.
+process.env.BETTER_AUTH_URL='http://localhost:3000';
+process.env.BETTER_AUTH_SECRET='unavailable-test-only-secret-not-for-real-sessions';
 process.env.DATABASE_URL='postgresql://bondlab:bondlab@127.0.0.1:1/bondlab';
 const {db}=await import('../../src/lib/db');
 const {POST:create}=await import('../../src/app/api/challenges/route');

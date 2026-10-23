@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { fixtureAccount,base } from './helpers/accounts';
+import { db } from '../src/lib/db';
+import { generate } from '../src/chemistry/generate';
+import { VERSION } from '../src/chemistry/rules';
+import { newSession } from '../src/lib/practice';
+const require=createRequire(process.env.BOND_LAB_PLAYWRIGHT_PACKAGE??import.meta.url);
+const {chromium}=require('playwright');
+await mkdir('test-results',{recursive:true});
+const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
+const account=await fixtureAccount();
+const generated=generate(111,'conditions','addition');
+const question=await db.challenge.create({data:{seed:111,mode:'conditions',family:'addition',version:VERSION}});
+const draft=newSession({...generated.question,id:question.id});draft.conditions=generated.reaction.conditions[0];
+await db.playerProgress.create({data:{userId:account.id,activeMode:'conditions',drafts:JSON.parse(JSON.stringify({conditions:draft}))}});
+const errors:string[]=[];
+const cookie={name:'better-auth.session_token',value:account.cookie.split('=').slice(1).join('='),domain:'localhost',path:'/',httpOnly:true,sameSite:'Lax'};
+try{
+  const guest=await browser.newContext({viewport:{width:1440,height:1000}}),guestPage=await guest.newPage();
+  guestPage.on('pageerror',(e:Error)=>errors.push(e.message));
+  await guestPage.goto(base);await guestPage.getByRole('button',{name:'Play as guest',exact:true}).click();
+  await guestPage.getByRole('button',{name:'Skip tour',exact:true}).click();
+  assert.equal(await guestPage.getByRole('button',{name:/Level .* XP/}).count(),0);
+  await guestPage.getByRole('button',{name:'Find the conditions',exact:true}).click();
+  await guestPage.getByRole('button',{name:'Check answer',exact:true}).waitFor();
+  await guestPage.screenshot({path:'test-results/login-guest-desktop.png',fullPage:true});
+  assert(await guestPage.evaluate(()=>localStorage.getItem('bond-lab-sessions-v2')));
+  const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([cookie]);
+  const page=await context.newPage();page.on('pageerror',(e:Error)=>errors.push(e.message));
+  await page.goto(base);await page.getByRole('button',{name:'Sign out',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Skip tour',exact:true}).click();
+  await page.getByRole('button',{name:'Check answer',exact:true}).click();
+  await page.getByRole('button',{name:new RegExp(`${generated.question.reward} XP. View progress`)}).waitFor();
+  await page.getByText('Saved to your account',{exact:true}).first().waitFor();
+  assert.equal((await db.playerProgress.findUniqueOrThrow({where:{userId:account.id}})).xp,generated.question.reward);
+  await page.reload();
+  await page.getByRole('button',{name:new RegExp(`${generated.question.reward} XP. View progress`)}).waitFor();
+  await page.getByRole('button',{name:'Plan a synthesis',exact:true}).click();
+  await page.getByRole('button',{name:'Next step',exact:true}).click();
+  await page.getByRole('button',{name:'Previous step',exact:true}).waitFor();
+  await page.getByText('Saved to your account',{exact:true}).first().waitFor();
+  const saved=await db.playerProgress.findUniqueOrThrow({where:{userId:account.id}});assert.equal((saved.drafts as any).synthesis.activeStep,1);
+  await page.screenshot({path:'test-results/login-account-desktop.png',fullPage:true});
+  await page.reload();await page.getByRole('button',{name:'Previous step',exact:true}).waitFor();
+  await page.getByText('Saved to your account',{exact:true}).first().waitFor();
+  const context2=await browser.newContext({viewport:{width:375,height:900}});await context2.addCookies([cookie]);
+  const page2=await context2.newPage();page2.on('pageerror',(e:Error)=>errors.push(e.message));
+  await page2.goto(base);await page2.getByRole('button',{name:'Previous step',exact:true}).waitFor();
+  for(const width of [375,320]){
+    await page2.setViewportSize({width,height:900});
+    assert.equal(await page2.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,`overflow at ${width}`);
+    await page2.screenshot({path:`test-results/login-account-${width}.png`,fullPage:true});
+  }
+  await page2.getByText('Saved to your account',{exact:true}).first().waitFor();
+  // Simulate failed saves, then prove retry keeps the draft.
+  await page2.route('**/api/progress',async(route:any)=>route.request().method()==='PATCH'?route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Temporary test outage'})}):route.continue());
+  await page2.getByRole('button',{name:'Previous step',exact:true}).click();
+  await page2.getByText('Temporary test outage',{exact:true}).waitFor();
+  await page2.unroute('**/api/progress');await page2.getByRole('button',{name:'Retry save',exact:true}).click();
+  await page2.getByText('Saved to your account',{exact:true}).first().waitFor();
+  const recovered=await db.playerProgress.findUniqueOrThrow({where:{userId:account.id}});assert.equal((recovered.drafts as any).synthesis.activeStep,0);
+  await page2.getByRole('button',{name:'Sign out',exact:true}).click();await page2.getByRole('button',{name:'Continue with Google',exact:true}).waitFor();
+  assert.equal(await page2.evaluate(()=>document.body.innerText.includes('Local test student')),false);
+  assert.deepEqual(errors,[]);
+  console.log('PASS: guest UI, server-scored XP across reload, signed-in drafts across reload and separate browser, 375/320px layout, failed-save retry, sign-out; no page errors.');
+}finally{await browser.close();await db.user.delete({where:{id:account.id}});await db.challenge.delete({where:{id:question.id}});await db.$disconnect();}

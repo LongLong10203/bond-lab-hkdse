@@ -14,4 +14,101 @@ model Challenge {
   family    String
   version   String
   createdAt DateTime @default(now())
+  results   PlayerChallenge[]
+}
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  progress      PlayerProgress?
+  results       PlayerChallenge[]
+  submissions   SubmissionReceipt[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Account {
+  id                     String    @id
+  accountId              String
+  providerId             String
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken            String?
+  refreshToken           String?
+  idToken                String?
+  accessTokenExpiresAt   DateTime?
+  refreshTokenExpiresAt  DateTime?
+  scope                  String?
+  password               String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([identifier])
+}
+
+model PlayerProgress {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xp         Int      @default(0)
+  completed  Int      @default(0)
+  attempts   Int      @default(0)
+  correct    Int      @default(0)
+  products   Int      @default(0)
+  conditions Int      @default(0)
+  synthesis  Int      @default(0)
+  displayName String?
+  tutorialCompleted Boolean @default(false)
+  drafts     Json     @default("{}")
+  activeMode String   @default("products")
+  revision   Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  @@index([xp(sort: Desc), userId])
+}
+
+model PlayerChallenge {
+  userId      String
+  challengeId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  revealed    Boolean   @default(false)
+  awarded     Boolean   @default(false)
+  @@id([userId, challengeId])
+  @@index([challengeId])
+}
+
+model SubmissionReceipt {
+  userId    String
+  requestId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  result    Json
+  createdAt DateTime @default(now())
+  @@id([userId, requestId])
 }

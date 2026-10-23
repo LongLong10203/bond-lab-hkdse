@@ -8,7 +8,7 @@ import { solution } from '../../src/chemistry/grading';
 import { VERSION } from '../../src/chemistry/rules';
 import type { Mode } from '../../src/chemistry/types';
 
-const base=process.env.TEST_BASE_URL??'http://127.0.0.1:3000';
+const base=process.env.TEST_BASE_URL??'http://localhost:3000';
 if(!['127.0.0.1','localhost'].includes(new URL(base).hostname))throw Error('Integration tests must target a local server.');
 const created:string[]=[];
 async function post(path:string,body:unknown){return fetch(`${base}/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}

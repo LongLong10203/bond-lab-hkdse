@@ -1,17 +1,25 @@
-# Verification — 21 October 2026
+# Verification — 23 October 2026
 
 Generator `2026.4`: **390 enumerated reaction variants, 35 rule variants, 11 families**.
 
 ## Automated checks
 
-- `./scripts/run test`: **35 passing** chemistry, input, draft-state, reward and layout tests.
-- `./scripts/run run test:integration`: **7 passing** against the development server and real PostgreSQL. Covers saved-question regeneration in all modes, repeated grading, reveal, malformed input, unknown IDs, generator-version rejection and an isolated unavailable-database check.
+- `./scripts/run test`: **39 passing** chemistry, input, draft-state, reward and layout tests.
+- `./scripts/run run test:integration`: **17 passing** against the development server and real PostgreSQL. Covers saved-question regeneration in all modes, repeated grading, reveal, malformed input, unknown IDs, generator-version rejection and an isolated unavailable-database check.
 - `./scripts/run run typecheck`: passed.
 - `./scripts/run run build`: passed after the final source changes, including Next.js TypeScript checks.
 
 New regression coverage includes retaining later synthesis work during correction and reload; immutable automatic final product; missing-input identification; malformed/old saved-state rejection; contextual catalyst/halide equivalence including explicit OH hydrogen; organic co-reactant grading; difficulty rewards and level boundaries; and bounded zigzag arrangement without connectivity changes. New checks cover increasing level costs, stationary loose atoms, stable up/down chains, explicit per-step co-reactant grading, and compatibility with 2026.3 drafts. Existing structural, polymer, valence, conservation and request-size checks remain.
 
-## Browser checks
+## Accounts, onboarding and rankings
+
+- Unit tests cover the exact school email/domain policy, verified Google profiles, progress validation, public profile mapping and nickname validation.
+- HTTP/database integration tests cover anonymous rejection, cross-account access, session revocation, draft revision conflicts, concurrent XP awards, idempotent retries, resets retaining award history, sorted rankings and stable ties, public-field privacy, nickname ownership, tutorial persistence without draft revision changes, and guest feedback with no XP.
+- A real school Google login through its Microsoft SSO succeeded locally. An answer earned 20 XP and the account restored its saved state. Session fixtures are also used for isolated API tests; they do not replace real OAuth checks.
+- Browser checked the welcome choices, signed-in five-step tour, guest tour, completion surviving reload, Help replay and skipping, guest progress with no levels/XP, and the signed-in leaderboard and clickable profile. Phone-width layouts were inspected.
+- Production build and TypeScript checks passed. Production uses a separate database and OAuth configuration; a real login must also be checked at the live URL.
+
+## Earlier chemistry browser checks
 
 Performed in the Codex in-app browser against the local app:
 
@@ -35,4 +43,4 @@ Replaced the hero/top mode tabs and hint UI with a compact sidebar-led workspace
 
 ## Remaining limitations
 
-This is a tested local prototype, not a curriculum-certified or publicly deployed service. Teacher content review, more devices/browsers and assistive-technology testing, and public-deployment protections remain outstanding. Browser flows above were exercised through the automation interface; they are not an unattended browser regression suite. Drafts are local to the browser/device. 2026.3 drafts remain compatible; older incompatible versions reset. See [chemistry scope](chemistry-scope.md) for bounded substrates, unsupported procedures and grading conventions.
+This is an educational prototype, not a curriculum-certified assessment service. Teacher content review, more devices/browsers and assistive-technology testing, remain outstanding. Browser flows above were exercised through the automation interface; they are not an unattended browser regression suite. Guest drafts are local to the browser/device; school-account drafts are stored in PostgreSQL. 2026.3 drafts remain compatible; older incompatible versions reset. See [chemistry scope](chemistry-scope.md) for bounded substrates, unsupported procedures and grading conventions.

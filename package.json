@@ -2,11 +2,12 @@
   "name": "bond-lab",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
+    "dev": "next dev --hostname localhost",
     "build": "prisma generate && next build",
-    "start": "next start --hostname 127.0.0.1",
+    "start": "next start --hostname localhost",
     "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "db:start": "node scripts/database.mjs",
@@ -19,6 +20,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "better-auth": "^1.7.12",
     "dotenv": "^17.2.3",
     "lucide-react": "1.60.0",
     "next": "16.4.2",
