@@ -3,6 +3,7 @@ import { useEffect,useRef,useState } from 'react';
 import { Undo2,Redo2,Trash2,Move,Copy,Minus,Equal } from 'lucide-react';
 import type { Element,Molecule } from '@/chemistry/types';
 import { formula } from '@/chemistry/molecules';
+import { atomLabelLayout,moleculeDisplayBounds } from '@/lib/molecule-display';
 import { AtomLabel,BondLines } from './molecule';
 import { useMoleculeLayout } from './use-molecule-layout';
 const empty=():Molecule=>({atoms:[],bonds:[],autoH:true});
@@ -29,7 +30,7 @@ export default function Editor({value,onChange,onLayout=onChange,starting,disabl
       if(bondStart&&bondStart!==id){const order=tool==='double'?2:1;const found=value.bonds.find(b=>(b.a===bondStart&&b.b===id)||(b.b===bondStart&&b.a===id));commit({...value,bonds:found?value.bonds.map(b=>b===found?{...b,order}:b):[...value.bonds,{a:bondStart,b:id,order}]});setBondStart(null);}else setBondStart(id);
     }else setSelected(id);
   };
-  const useStart=()=>{if(!starting?.atoms.length)return;const xs=starting.atoms.map(a=>a.x),ys=starting.atoms.map(a=>a.y),dx=360-(Math.min(...xs)+Math.max(...xs))/2,dy=170-(Math.min(...ys)+Math.max(...ys))/2;commit({...structuredClone(starting),atoms:starting.atoms.map(a=>({...a,x:a.x+dx,y:a.y+dy}))},true);setSelected(null);setBondStart(null);};
+  const useStart=()=>{if(!starting?.atoms.length)return;const bounds=moleculeDisplayBounds(starting),dx=360-(bounds.left+bounds.right)/2,dy=170-(bounds.top+bounds.bottom)/2;commit({...structuredClone(starting),atoms:starting.atoms.map(a=>({...a,x:a.x+dx,y:a.y+dy}))},true);setSelected(null);setBondStart(null);};
   const helper=tool==='single'||tool==='double'?(bondStart?'Select the second atom.':'Select two atoms to connect.'):tool==='erase'?'Select an atom or bond to remove.':tool==='charge'?'Select O for − or N for +.':'Drag atoms to rearrange them.';
   return <div className={'editor '+(disabled?'editor-disabled':'')}>
     <div className="editor-toolbar"><div className="elements" aria-label="Atoms">{ELEMENTS.map(e=><button type="button" draggable={!disabled} onDragStart={event=>event.dataTransfer.setData('element',e)} disabled={disabled} key={e} title={e==='*'?'Polymer continuation':`Add ${e}`} aria-label={e==='*'?'Add chain continuation':`Add ${e} atom`} aria-pressed={tool===e} className={tool===e?'selected':''} onClick={()=>{setTool(e);setSelected(null);setBondStart(null);}}>{e}</button>)}</div><div className="bond-tools">
@@ -54,9 +55,9 @@ export default function Editor({value,onChange,onLayout=onChange,starting,disabl
       onPointerCancel={()=>{const start=layout.cancelDrag();if(start)onChange(start);}}>
       {leaving&&<g className="molecule-exit" pointerEvents="none"><BondLines molecule={leaving}/>{leaving.atoms.filter(a=>!value.atoms.some(b=>b.id===a.id)).map(a=><AtomLabel key={a.id} atom={a} molecule={leaving}/>)}</g>}
       <BondLines molecule={layout.rendered} animate onBondClick={i=>{if(disabled)return;if(tool==='erase')commit({...value,bonds:value.bonds.filter((_,j)=>j!==i)});else if(tool==='single'||tool==='double')commit({...value,bonds:value.bonds.map((b,j)=>j===i?{...b,order:tool==='single'?1:2}:b)});}}/>
-      {layout.rendered.atoms.map(a=><g key={a.id} transform={`translate(${a.x} ${a.y})`} className="editor-atom" role="button" tabIndex={disabled?-1:0} aria-pressed={selected===a.id} aria-label={`${a.element} atom`} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();atomClick(a.id);}}} onClick={e=>{e.stopPropagation();atomClick(a.id);}} onPointerDown={e=>{if(!disabled){e.preventDefault();suppressClick.current=false;setSelected(a.id);if(ELEMENTS.includes(tool as Element)||tool==='move'){e.currentTarget.setPointerCapture(e.pointerId);layout.startDrag(a.id,point(e.clientX,e.clientY));}}}}>
-        <g className="atom-entrance"><circle className="atom-ring" r={27} fill="transparent" stroke={selected===a.id?'#789345':'transparent'} strokeWidth="1.5"/><AtomLabel atom={{...a,x:0,y:0}} molecule={layout.rendered}/></g>
-      </g>)}
+      {layout.rendered.atoms.map(a=>{const label=atomLabelLayout(a,layout.rendered);return <g key={a.id} transform={`translate(${a.x} ${a.y})`} className="editor-atom" role="button" tabIndex={disabled?-1:0} aria-pressed={selected===a.id} aria-label={`${a.element} atom`} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();atomClick(a.id);}}} onClick={e=>{e.stopPropagation();atomClick(a.id);}} onPointerDown={e=>{if(!disabled){e.preventDefault();suppressClick.current=false;setSelected(a.id);if(ELEMENTS.includes(tool as Element)||tool==='move'){e.currentTarget.setPointerCapture(e.pointerId);layout.startDrag(a.id,point(e.clientX,e.clientY));}}}}>
+        <g className="atom-entrance"><circle className="atom-ring" cx={label.center.x} cy={label.center.y} r={label.radius} fill="transparent" stroke={selected===a.id?'#789345':'transparent'} strokeWidth="1.5"/><AtomLabel atom={{...a,x:0,y:0}} molecule={layout.rendered}/></g>
+      </g>;})}
     </svg>{!value.atoms.length&&<div className="empty-canvas" aria-hidden="true"><strong>Add an atom to begin.</strong></div>}
     <div className="canvas-actions"><button title="Undo" aria-label="Undo" disabled={!past.length||disabled} onClick={undo}><Undo2 size={17}/></button><button title="Redo" aria-label="Redo" disabled={!future.length||disabled} onClick={redo}><Redo2 size={17}/></button><button title="Clear drawing" aria-label="Clear drawing" disabled={!value.atoms.length||disabled} onClick={()=>{commit(empty());setSelected(null);setBondStart(null);}}><Trash2 size={16}/></button></div>
     </div>
