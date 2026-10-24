@@ -1,6 +1,6 @@
 # Google sign-in on the live site
 
-Live site: **https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app**
+Live site: **https://bond-lab-hkdse.vercel.app**
 
 ## 1. Configure the Google web client
 
@@ -8,11 +8,11 @@ Live site: **https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app**
 2. Open **Google Auth Platform → Clients** and select your **Web application** client.
 3. Under **Authorized JavaScript origins**, add:
 
-       https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app
+       https://bond-lab-hkdse.vercel.app
 
 4. Under **Authorized redirect URIs**, add:
 
-       https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app/api/auth/callback/google
+       https://bond-lab-hkdse.vercel.app/api/auth/callback/google
 
 5. Click **Save**. Origins have no trailing path; the redirect must include the complete callback path.
 6. For local testing with this same client, also retain the origin `http://localhost:3000` and redirect `http://localhost:3000/api/auth/callback/google`.
@@ -35,7 +35,7 @@ Open **Vercel → bond-lab-hkdse → Settings → Environment Variables**. Set t
 | --- | --- |
 | `GOOGLE_CLIENT_ID` | Client ID from the web client above |
 | `GOOGLE_CLIENT_SECRET` | Secret from that same client |
-| `BETTER_AUTH_URL` | `https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app` |
+| `BETTER_AUTH_URL` | `https://bond-lab-hkdse.vercel.app` |
 | `BETTER_AUTH_SECRET` | A fresh random secret of at least 32 characters; different from local development |
 
 Keep all four server-only: do not prefix them with `NEXT_PUBLIC_`. Mark secrets as sensitive. Never commit credentials or paste them into chat. Keep the existing production database settings. After changing Vercel variables, redeploy so the new deployment uses them. Do not change a working `BETTER_AUTH_SECRET` routinely; doing so invalidates existing session cookies.
@@ -45,15 +45,18 @@ The initial release configures these values from the locally supplied Google cli
 ## 4. Test the live site
 
 1. Open the live URL and choose **Continue with Google**.
-2. Sign in with your `@syss.edu.hk` account. Complete any normal school SSO steps yourself. The first sign-in creates your live account.
-3. Complete or skip the tutorial, solve a question, and wait for **Saved to your account**.
+2. Sign in with your `@syss.edu.hk` account. Complete any normal school SSO steps yourself. The first sign-in creates your live account and asks you to choose a display name.
+3. Choose your display name, then complete or skip the tutorial, solve a question, and wait for **Saved to your account**.
 4. Reload and check that the XP and answer remain. Open **Leaderboard**, select your player, and optionally choose a nickname.
 5. Sign out and choose **Play as guest**. The guest game should show no XP or levels.
 
 Local and live databases are separate. Local test scores are not copied to the live site. For a real cross-device check, sign into the live URL on another device and check the saved draft.
 
+The short URL above is canonical. Pages on the former project-team alias redirect here. Only the two known production origins are trusted; unrelated websites are not allowed to make account-changing requests. Google shows an account chooser on each attempt, so you can back out and retry with your school account.
+
 ## Troubleshooting
 
+- **Invalid origin:** reopen the short live URL above. Ensure Vercel’s Production BETTER_AUTH_URL matches it exactly, then redeploy. Do not disable origin checking.
 - **redirect_uri_mismatch:** check the full callback URL above in the same Google client whose credentials are in Vercel. Do not use a temporary deployment URL to sign in.
 - **access_denied / app in testing:** check Audience and Test users. Publishing the website alone does not publish the Google OAuth app.
 - **App blocked / admin_policy_enforced:** ask the school’s Google Workspace administrator to permit Bond Lab.

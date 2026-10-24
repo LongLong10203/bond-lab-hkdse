@@ -1,10 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useEffect,useState } from 'react';
 import { Atom,ArrowRight,FlaskConical,GitBranch,Settings2 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { LIVE_ORIGIN,LEGACY_ORIGIN } from '@/lib/site-origin';
 export default function Welcome({googleReady,loginError}:{googleReady:boolean;loginError:string}){
   const [busy,setBusy]=useState(false),[error,setError]=useState(loginError);
+  useEffect(()=>{
+    const resume=()=>setBusy(false);
+    window.addEventListener('pageshow',resume);
+    return()=>window.removeEventListener('pageshow',resume);
+  },[]);
   const signIn=async()=>{
+    if(window.location.origin===LEGACY_ORIGIN){window.location.assign(LIVE_ORIGIN+'/login');return;}
     setBusy(true);setError('');
     try{const result=await authClient.signIn.social({provider:'google',callbackURL:'/',errorCallbackURL:'/login?authError=1'});if(result.error)throw Error(result.error.message);}
     catch(e){setError(e instanceof Error?e.message:'Could not start Google sign-in.');setBusy(false);}

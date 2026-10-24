@@ -4,7 +4,7 @@ import { fixtureAccount,accountRequest,base } from '../helpers/accounts';
 import { db } from '../../src/lib/db';
 import { generate } from '../../src/chemistry/generate';
 const users:string[]=[],questions:string[]=[];
-async function account(domain?:string,verified?:boolean){const a=await fixtureAccount(domain,verified);users.push(a.id);await accountRequest('progress',a);return a;}
+async function account(domain?:string,verified?:boolean){const a=await fixtureAccount(domain,verified);users.push(a.id);await accountRequest('progress',a);if(domain!=='gmail.com')await accountRequest('profile',a,'PATCH',{displayName:'Test Chemist'});return a;}
 after(async()=>{await db.user.deleteMany({where:{id:{in:users}}});await db.challenge.deleteMany({where:{id:{in:questions}}});await db.$disconnect();});
 test('guests cannot read school rankings or profiles, or update account data',async()=>{
   for(const path of ['leaderboard','leaderboard/someone'])assert.equal((await accountRequest(path,null)).status,401);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { playerName,displayNameSchema,leaderboardPlayer } from '../src/lib/leaderboard';
 test('default leaderboard names do not use emails or Google names',()=>{
-  assert.equal(playerName('test-abcdef',null),'Chemist ABCDEF');
+  assert.equal(playerName('test-abcdef',null),'Name not chosen');
   assert.equal(playerName('id','Lab partner'),'Lab partner');
   const player=leaderboardPlayer({userId:'id',displayName:null,xp:100,completed:5},1);
   assert.equal(player.level,2);assert.equal(player.rank,1);assert.equal('email' in player,false);

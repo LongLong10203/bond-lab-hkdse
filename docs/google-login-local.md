@@ -20,7 +20,7 @@ This setup keeps the app, accounts, and progress database on your PC. Google han
 
    Keep existing database settings and other entries. If `BETTER_AUTH_SECRET` is already populated, keep it. For a fresh checkout, generate it with `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"`. Do not paste credentials into chat or commit them.
 6. Start the local database (`npm run db:start`), apply migrations (`npm run setup`), and start the app (`npm run dev`). Restart the app after changing credentials.
-7. Visit **http://localhost:3000** and choose **Continue with Google** on the welcome page. Use your `@syss.edu.hk` Google Workspace account. The first successful login registers it automatically.
+7. Visit **http://localhost:3000** and choose **Continue with Google** on the welcome page. Use your `@syss.edu.hk` Google Workspace account. The first successful login registers it automatically and asks you to choose a display name.
 
 You can use the same Google web client for local and production testing: keep both origins and both callback URLs in that client. If you replace the credentials in `.env.local`, restart the local server. Production credentials must also be updated in Vercel; changes to your local file do not automatically update the live site.
 
@@ -31,7 +31,7 @@ You can use the same Google web client for local and production testing: keep bo
 - Start a synthesis, edit a drawing or conditions, and switch steps. Wait for **Saved to your account**.
 - Reload or sign out and back in. The account's scores and drafts should return.
 - Open a separate browser, sign into the same school account, and verify its progress returns.
-- A personal Gmail or other-domain account cannot register or log in. The domain hint may hide those accounts; the callback also enforces the restriction.
+- A personal Gmail or other-domain account cannot register or log in. The Google chooser allows switching accounts; the callback enforces the restriction.
 - Guest progress remains separate. Signed-in drafts are stored on the server, not in the guest browser-storage keys.
 
 The local database persists in `.postgres/data`. Do not delete that directory if you want to retain local test accounts and progress. This database is separate from production; local test accounts will not appear on the existing live website.

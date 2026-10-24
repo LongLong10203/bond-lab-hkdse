@@ -2,7 +2,7 @@
 
 An interactive organic chemistry practice game for HKDSE learners. Build molecules, choose reaction conditions, and plan multi-step syntheses with immediate feedback.
 
-**[Play Bond Lab](https://bond-lab-hkdse-longs-projects-0240e8f8.vercel.app)** — choose school sign-in or guest practice.
+**[Play Bond Lab](https://bond-lab-hkdse.vercel.app)** — choose school sign-in or guest practice.
 
 ## About the project
 
@@ -14,7 +14,7 @@ Bond Lab provides three practice modes:
 - **Find the conditions:** choose reagents and conditions for a given transformation.
 - **Plan a synthesis:** construct a 2–4-step route, choose conditions and any organic co-reactants for each step, and move freely between steps. The final product is supplied.
 
-The molecule editor supports dragging, flexible arrangement, animated changes, and reduced-motion preferences. Signed-in players earn XP for harder questions, and each level requires more XP than the previous one. Guest practice has no XP or levels. Worked solutions remain available; viewing one removes that question’s account XP reward. A five-step spotlight tutorial introduces the controls on first play, with a replay option in Help.
+The molecule editor supports dragging, flexible arrangement, animated changes, and reduced-motion preferences. Element symbols and adjacent hydrogen labels share a baseline; only counts are subscripted. Bonds attach to the actual element symbol, with implicit hydrogens placed away from bonds in horizontal, vertical, and diagonal layouts. Signed-in players earn XP for harder questions, and each level requires more XP than the previous one. Guest practice has no XP or levels. Worked solutions remain available; viewing one removes that question’s account XP reward. A five-step spotlight tutorial introduces the controls on first play, with a replay option in Help.
 
 Questions are generated from bounded chemistry rules and checked on the server. This is an independent educational project, not an official HKEAA resource. It covers selected HKDSE organic chemistry topics, not the entire syllabus or every valid reaction. See the [chemistry scope](docs/chemistry-scope.md) for supported transformations and limitations. Teacher review is recommended before classroom assessment; game XP does not represent examination marks.
 
@@ -24,11 +24,11 @@ Every new visit starts at a sign-in/register page with Google and guest choices.
 
 Google sign-in accepts only verified school accounts with the exact `syss.edu.hk` email and Google Workspace domain. The first successful sign-in creates the account. Accounts, sessions, practice drafts, and scores are stored in PostgreSQL. Answers and XP awards are checked on the server; each challenge awards XP once per account, and viewing its solution removes its reward. Signing out ends the session.
 
-Account drafts save automatically after a short pause. Wait for “Saved to your account” before leaving. Failed saves show a retry option. A stale tab cannot overwrite a newer saved draft: reload it to continue from the latest saved version. Resetting scores keeps drawings and does not make previously awarded or revealed questions eligible for XP again.
+Account drafts save automatically after a short pause. Wait for “Saved to your account” before leaving. Failed saves show a retry option. A stale tab cannot overwrite a newer saved draft: reload it to continue from the latest saved version. Score reset is not available. To permanently remove your game data, open **My profile → Delete account**, type **DELETE**, and confirm. Deletion removes your profile, saved work, XP, OAuth records, and all sessions; it does not delete your Google account. A session older than one day requires a fresh Google sign-in before deletion. Signing in after deletion creates a new account.
 
 ## School leaderboard and profiles
 
-Signed-in school players can open **Leaderboard** in the navigation. Rankings use descending account XP, with a stable player-ID order for ties. Select a player to see their level, XP, rank, solved counts by mode, and joining month. Open your own profile to choose a nickname. New accounts receive a neutral “Chemist” name; Google names, email addresses, saved drawings, and login information are not published in profiles. Guests cannot access these endpoints.
+Signed-in school players can open the full **Leaderboard** page in the navigation. Rankings use descending account XP, with a stable player-ID order for ties. Select a player to see their level, XP, rank, solved counts by mode, and joining month. New players choose a display name before playing and can change it any time on **My profile**. Accounts without a chosen name are excluded from rankings; Google names, email addresses, saved drawings, and login information are not published in profiles. Guests cannot access these endpoints.
 
 Tutorial completion is saved per account, or in the guest browser. Skipping the tour also marks it complete; **Help → Replay tutorial** opens it again.
 
@@ -73,7 +73,7 @@ With both the app and its development database running, also run:
 npm run test:integration
 ```
 
-Unit tests do not require a database. Integration tests exercise challenge creation, grading, account privacy, session revocation, saved drafts, score resets, concurrent awards, retry handling, leaderboard ordering and privacy, nickname ownership, tutorial completion, and guest grading without XP through the local HTTP API, then remove their temporary records. Account tests require the same `BETTER_AUTH_SECRET` as the local server. They create local session fixtures; they do not simulate a real successful Google login. Set `TEST_BASE_URL` if the local app uses a different port. The integration runner rejects non-local URLs.
+Unit tests do not require a database. Integration tests exercise challenge creation, grading, account privacy, session revocation, saved drafts, account deletion, login retries, concurrent awards, retry handling, leaderboard ordering and privacy, nickname ownership, tutorial completion, and guest grading without XP through the local HTTP API, then remove their temporary records. Account tests require the same `BETTER_AUTH_SECRET` as the local server. They create local session fixtures; they do not simulate a real successful Google login. Set `TEST_BASE_URL` if the local app uses a different port. The integration runner rejects non-local URLs.
 
 For a local production preview, stop the development app, run `npm run build`, and then `npm start` with PostgreSQL still running.
 

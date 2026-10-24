@@ -40,8 +40,8 @@ test('server awards XP once across simultaneous requests and retries, and persis
   const again=await(await accountRequest('submissions',a,'POST',{...body,requestId:randomUUID()})).json();assert.equal(again.xp,0);
   const current=await(await accountRequest('progress',a)).json();assert.equal(current.progress.xp,question.reward);assert.equal(current.progress.completed,1);assert.equal(current.progress.attempts,2);
   assert.equal((await accountRequest('submissions',{id:a.id,cookie:''},'POST',body)).status,401);
-  assert.equal((await accountRequest('progress',a,'DELETE')).status,200);
-  const afterReset=await(await accountRequest('submissions',a,'POST',{...body,requestId:randomUUID()})).json();assert.equal(afterReset.xp,0);assert.equal(afterReset.progress.xp,0);
+  assert.equal((await accountRequest('progress',a,'DELETE')).status,405);
+  const afterReset=await(await accountRequest('submissions',a,'POST',{...body,requestId:randomUUID()})).json();assert.equal(afterReset.xp,0);assert.equal(afterReset.progress.xp,question.reward);
 });
 test('viewing a solution permanently removes its XP reward for that account',async()=>{
   const a=await account();

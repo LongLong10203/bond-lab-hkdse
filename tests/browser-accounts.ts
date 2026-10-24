@@ -29,7 +29,7 @@ try{
   assert(await guestPage.evaluate(()=>localStorage.getItem('bond-lab-sessions-v2')));
   const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([cookie]);
   const page=await context.newPage();page.on('pageerror',(e:Error)=>errors.push(e.message));
-  await page.goto(base);await page.getByRole('button',{name:'Sign out',exact:true}).waitFor();
+  await page.goto(base);await page.getByRole('textbox',{name:'Display name',exact:true}).fill('Browser test student');await page.getByRole('button',{name:'Save name and continue',exact:true}).click();await page.getByRole('button',{name:'Sign out',exact:true}).waitFor();
   await page.getByRole('button',{name:'Skip tour',exact:true}).click();
   await page.getByRole('button',{name:'Check answer',exact:true}).click();
   await page.getByRole('button',{name:new RegExp(`${generated.question.reward} XP. View progress`)}).waitFor();
