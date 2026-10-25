@@ -23,13 +23,25 @@ export function arrangedPositions(m:Molecule,positions:Positions,pinned?:{id:str
       for(const id of queue)for(const next of adjacent.get(id)??[])if(allowed.has(next)&&!paths.has(next)){const path=[...paths.get(id)!,next];paths.set(next,path);queue.push(next);if(path.length>backbone.length)backbone=path;}
     }
     if(!backbone.length)backbone=[component[0]];
+    // Peel branches to find a simple ring, then retain its closed polygon.
+    const core=new Set(candidates);
+    let changed=true;
+    while(changed){changed=false;for(const id of core)if((adjacent.get(id)??[]).filter(n=>core.has(n)).length<2){core.delete(id);changed=true;}}
+    const ring:string[]=[];
+    if(core.size>=3&&[...core].every(id=>(adjacent.get(id)??[]).filter(n=>core.has(n)).length===2)){
+      let id=[...core][0],previous='';
+      do{ring.push(id);const next=(adjacent.get(id)??[]).find(n=>core.has(n)&&n!==previous)!;previous=id;id=next;}while(id!==ring[0]&&ring.length<=core.size);
+      if(ring.length!==core.size)ring.length=0;
+    }
     const local:Positions={};
-    backbone.forEach((id,i)=>{local[id]={x:i*66,y:i%2?19:-19};});
+    if(ring.length){const radius=76/(2*Math.sin(Math.PI/ring.length));ring.forEach((id,i)=>{const angle=-Math.PI/2+2*Math.PI*i/ring.length;local[id]={x:radius*Math.cos(angle),y:radius*Math.sin(angle)};});backbone=ring;}
+    else backbone.forEach((id,i)=>{local[id]={x:i*66,y:i%2?19:-19};});
     const queue=[...backbone];
     for(const id of queue)for(const next of adjacent.get(id)??[]){
       if(local[next])continue;
       const parent=local[id],length=m.atoms.find(a=>a.id===next)?.element==='H'?52:66;
-      const angles=parent.y<=0?[-90,-150,-30,90,150,30]:[90,150,30,-90,-150,-30];
+      const outward=Math.atan2(parent.y,parent.x)*180/Math.PI;
+      const angles=ring.length?[outward,outward-45,outward+45,outward-90,outward+90]:parent.y<=0?[-90,-150,-30,90,150,30]:[90,150,30,-90,-150,-30];
       let best:Point|undefined,bestScore=-Infinity;
       for(const degrees of angles){const angle=degrees*Math.PI/180,p={x:parent.x+Math.cos(angle)*length,y:parent.y+Math.sin(angle)*length};const distance=Math.min(...Object.entries(local).filter(([key])=>key!==id).map(([,q])=>Math.hypot(p.x-q.x,p.y-q.y)),100);const score=Math.min(distance,60);if(score>bestScore){best=p;bestScore=score;}}
       local[next]=best!;queue.push(next);

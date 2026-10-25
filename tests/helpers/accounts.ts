@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { config } from 'dotenv';
 import { randomUUID, createHmac } from 'node:crypto';
 import { db } from '../../src/lib/db';
-config({path:'.env.local',quiet:true});config({quiet:true});
+// Match Next.js: local credentials take precedence over empty .env placeholders.
+config({path:'.env.local',quiet:true,override:true});config({quiet:true});
 export const base=process.env.TEST_BASE_URL??'http://localhost:3000';
 if(!['127.0.0.1','localhost'].includes(new URL(base).hostname)||!['127.0.0.1','localhost'].includes(new URL(process.env.DATABASE_URL!).hostname))throw Error('Account tests require a local app and local database.');
 // Test fixtures only: no login bypass is exposed by the application.

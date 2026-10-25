@@ -1,3 +1,18 @@
+# Verification
+
+## Current release — generator 2026.6
+
+636 enumerated assessed reaction variants, 46 rule variants; 12 reaction families plus the all-reactions selector. Polymer questions are removed; cyclic compounds and acid–base transformations are included.
+
+- 56 unit/regression tests pass, including all generated reactant/product valences, amide coproduct charge states, variable assessed hydrolysis products, cracking conservation, ring formulas/graph equivalence, ring-preserving layout, shorter saved routes and obsolete-seed rejection.
+- Independent breadth-first traversal checks 100 seeded synthesis routes for shortcuts. All 24 primary haloalkane/halogen homologues (C1–C8, Cl/Br/I) reach carboxylate in three transformations.
+- All 20 local HTTP/PostgreSQL integration tests pass: grading, persistence, account isolation, XP idempotency, profiles, deletion, tutorial completion, invalid inputs and database failure handling. Test credentials now follow Next.js environment-file precedence.
+- Browser checks cover the ring tool, converting a five-carbon ring from C5H10 to C5H8 by editing a bond, supplied amide coproducts, cyclic focus, and adjustable synthesis steps.
+- Drawing checks verify mirrored carbon-group diagonals, equal-length double/triple bonds in eight directions, explicit displaced N–H bonds, full-label selection circles and centred previews. Tall ring diagrams get extra vertical space.
+- Older unfinished questions refresh under the new version. Existing account progress is retained.
+
+## Historical verification (superseded chemistry rules)
+
 # Verification — 24 October 2026
 
 Generator `2026.4`: **390 enumerated reaction variants, 35 rule variants, 11 families**.
@@ -51,4 +66,4 @@ Replaced the hero/top mode tabs and hint UI with a compact sidebar-led workspace
 
 ## Remaining limitations
 
-This is an educational prototype, not a curriculum-certified assessment service. Teacher content review, more devices/browsers and assistive-technology testing remain outstanding. Browser flows above were exercised through the automation interface; they are not an unattended browser regression suite. Guest drafts are local to the browser/device; school-account drafts are stored in PostgreSQL. 2026.3 drafts remain compatible; older incompatible versions reset. See [chemistry scope](chemistry-scope.md) for bounded substrates, unsupported procedures and grading conventions.
+This is an educational prototype, not a curriculum-certified assessment service. Teacher content review, more devices/browsers and assistive-technology testing remain outstanding. Browser flows above were exercised through the automation interface; they are not an unattended browser regression suite. Guest drafts are local to the browser/device; school-account drafts are stored in PostgreSQL. The current 2026.5 release refreshes all earlier question drafts. See [chemistry scope](chemistry-scope.md) for bounded substrates, unsupported procedures and grading conventions.

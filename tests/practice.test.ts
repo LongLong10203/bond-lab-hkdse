@@ -6,7 +6,7 @@ import { molecule } from '../src/chemistry/molecules';
 import { conditionsMatch } from '../src/chemistry/check';
 import { isAlcohol,isOrganicReagent,reagentOptions } from '../src/chemistry/condition-options';
 import { reactions,startingCompounds } from '../src/chemistry/rules';
-import { answerFor,editStep,missingInput,newSession,restoreSessions } from '../src/lib/practice';
+import { answerFor,editStep,resizeSteps,missingInput,newSession,restoreSessions } from '../src/lib/practice';
 import { levelFor,rewardFor } from '../src/chemistry/rewards';
 import { arrangedPositions,layoutTick,withPositions,type Positions } from '../src/lib/molecule-layout';
 
@@ -53,15 +53,15 @@ test('all reaction procedures remain selectable with supplied organic co-reactan
     assert.equal(conditionsMatch(answer,r.conditions,{provided,alcohol:isAlcohol(molecule(c))}),true,r.ruleId);
   }
 });
-test('ester and polymer questions place organic reagents in the question and accept conditions without reselecting them',()=>{
-  for(const family of ['esterification','polymerisation'])for(let seed=0;seed<20;seed++){
+test('ester questions place organic reagents in the question and accept conditions without reselecting them',()=>{
+  for(const family of ['esterification'])for(let seed=0;seed<20;seed++){
     const g=generate(seed,'conditions',family);const conditions=g.reaction.conditions[0].filter(id=>!isOrganicReagent(id));assert.equal(grade(seed,'conditions',family,{conditions}).correct,true);
     if(g.reaction.conditions[0].some(isOrganicReagent))assert.ok(g.question.coReactants.length>0);
   }
 });
 test('harder questions earn more XP and exact level boundaries advance correctly',()=>{
   const two=generate(1,'synthesis').route.slice(0,2);assert.ok(rewardFor('synthesis',[...two,...two]).reward>rewardFor('synthesis',two).reward);
-  const easy=reactions({kind:'alkene',n:2}).find(r=>r.ruleId==='addition:hydrogen')!,hard=reactions({kind:'diacid',n:4}).find(r=>r.ruleId==='polymerisation:polyester')!;
+  const easy=reactions({kind:'alkene',n:2}).find(r=>r.ruleId==='addition:hydrogen')!,hard=reactions({kind:'alkene',n:6,cyclic:true}).find(r=>r.ruleId==='addition:hydrogen')!;
   assert.ok(rewardFor('products',[hard]).reward>rewardFor('products',[easy]).reward);
   assert.deepEqual(levelFor(99),{level:1,withinLevel:99,toNext:1,required:100});assert.deepEqual(levelFor(100),{level:2,withinLevel:0,toNext:150,required:150});assert.equal(levelFor(250).level,3);
 });
@@ -127,9 +127,26 @@ test('synthesis co-reactants are required only in the selected step and wrong or
   }
   assert.ok(found,'A generated ester synthesis was tested');
 });
-test('2026.3 draft drawings and scores flags survive the compatible co-reactant update',()=>{
-  const g=synthesis(),draft={...newSession({...g.question,id:'compatible',version:'2026.3'}),revealed:true,awarded:true};
-  draft.steps[0].molecule=molecule(g.route[0].product);
-  const restored=restoreSessions(JSON.stringify({synthesis:draft})).synthesis!;
-  assert.deepEqual(restored.steps,draft.steps);assert.equal(restored.question.version,g.question.version);assert.equal(restored.awarded,true);assert.equal(restored.revealed,true);
+test('old generator drafts are discarded instead of silently reinterpreted',()=>{
+  const g=synthesis(),draft=newSession({...g.question,id:'old',version:'2026.4'});
+  assert.equal(restoreSessions(JSON.stringify({synthesis:draft})).synthesis,undefined);
+});
+test('shorter synthesis drafts keep the target as their last step and survive reload',()=>{
+  const g=synthesis();let draft=newSession({...g.question,id:'shorter'});
+  draft=editStep(draft,0,{molecule:molecule(g.route[0].product),conditions:g.route[0].conditions[0]});
+  const short=resizeSteps(draft,2);assert.equal(short.steps.length,2);assert.deepEqual(short.steps[0],draft.steps[0]);assert.deepEqual(short.steps[1].molecule,g.question.target);
+  const restored=restoreSessions(JSON.stringify({synthesis:short})).synthesis!;assert.equal(restored.steps.length,2);
+  assert.deepEqual(answerFor(restored).steps!.at(-1)!.molecule,g.question.target);
+  const expanded=resizeSteps(short,3);assert.equal(expanded.steps[1].molecule.atoms.length,0);assert.deepEqual(expanded.steps[2].molecule,g.question.target);
+});
+test('flexible layout preserves a regular ring and its outward substituent',()=>{
+  for(const n of [5,6]){
+    const m=molecule({kind:'alcohol',n,cyclic:true}),p=Object.fromEntries(m.atoms.map(a=>[a.id,{x:a.x,y:a.y}]));
+    const target=arrangedPositions(m,p);const edges=m.bonds.filter(b=>Number(b.a)<n&&Number(b.b)<n);
+    for(const b of edges)assert(Math.abs(Math.hypot(target[b.a].x-target[b.b].x,target[b.a].y-target[b.b].y)-76)<1e-6);
+    assert(target[String(n)].y<target['0'].y);
+    const next=arrangedPositions(m,target);for(const id in target)assert(Math.hypot(next[id].x-target[id].x,next[id].y-target[id].y)<1e-6);
+    let positions=p;for(let i=0;i<200;i++)positions=layoutTick(m,positions,{}).positions;
+    assert.deepEqual(withPositions(m,positions).bonds,m.bonds);
+  }
 });

@@ -43,8 +43,8 @@ test('invalid requests and unknown challenges return useful HTTP errors',async()
   }
 });
 
-test('compatible 2026.3 questions still accept corrected answers without replacing their drafts',async()=>{
+test('older generator questions are rejected instead of being reinterpreted',async()=>{
   const seed=134,mode='synthesis',family='all';const row=await db.challenge.create({data:{seed,mode,family,version:'2026.3'}});created.push(row.id);
   const g=generate(seed,mode,family),answer={steps:g.route.map(r=>({molecule:molecule(r.product),conditions:r.conditions[0]}))};
-  const checked=await post('submissions',{id:row.id,answer});assert.equal(checked.status,200);assert.equal((await checked.json()).correct,true);
+  const checked=await post('submissions',{id:row.id,answer});assert.equal(checked.status,409);assert.match((await checked.json()).error,/older generator/);
 });

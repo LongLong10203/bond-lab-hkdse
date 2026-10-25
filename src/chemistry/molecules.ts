@@ -3,6 +3,15 @@ const roots = ['', 'meth', 'eth', 'prop', 'but', 'pent', 'hex', 'hept', 'oct'];
 export function name(c: Compound): string {
   const r=roots[c.n], p=(c.position ?? 0)+1, h=c.halogen ?? 'Br';
   const hal={Cl:'chloro',Br:'bromo',I:'iodo'}[h];
+  if(c.cyclic){
+    const ring=`cyclo${r}`;
+    if(c.kind==='alkane')return `${ring}ane`;
+    if(c.kind==='alkene')return `${ring}ene`;
+    if(c.kind==='alcohol')return `${ring}anol`;
+    if(c.kind==='ketone')return `${ring}anone`;
+    if(c.kind==='haloalkane')return `${hal}${ring}ane`;
+    if(c.kind==='dihalo')return `1,2-di${hal}${ring}ane`;
+  }
   switch(c.kind){
     case 'alkane': return `${r}ane`;
     case 'alkene': return c.n===2?'ethene':`${r}-1-ene`;
@@ -14,16 +23,13 @@ export function name(c: Compound): string {
     case 'carboxylate': return `${r}anoate ion`;
     case 'ester': return `${roots[c.m??2]}yl ${r}anoate`;
     case 'amide': return `${c.m?`N-${roots[c.m]}yl` : ''}${r}anamide`;
-    case 'amine': return `${roots[c.n]}ylamine`;
-    case 'ammonium': return `${roots[c.n]}ylammonium ion`;
+    case 'amine': return c.n?`${roots[c.n]}ylamine`:'ammonia';
+    case 'ammonium': return c.n?`${roots[c.n]}ylammonium ion`:'ammonium ion';
     case 'dihalo': return `1,2-di${hal}${r}ane`;
     case 'diol': return `${r}ane-1,2-diol`;
-    case 'addition-polymer': return `poly(${c.n===2?'ethene':'propene'}) repeating unit`;
-    case 'polyester': return 'polyester repeating unit';
-    case 'polyamide': return 'polyamide repeating unit';
-    case 'combustion': return 'carbon dioxide and water';
-    case 'diacid': return `${r}anedioic acid`;
-    case 'cracking': return `${roots[c.n]}ane + ${c.m===2?'ethene':roots[c.m??2]+'-1-ene'}`;
+    case 'water': return 'water';
+    case 'carbon-dioxide': return 'carbon dioxide';
+    case 'hydrogen-halide': return `hydrogen ${h==='Cl'?'chloride':h==='Br'?'bromide':'iodide'}`;
   }
 }
 export function molecule(c: Compound): Molecule {
@@ -31,30 +37,22 @@ export function molecule(c: Compound): Molecule {
   const add=(element:Element,x:number,y:number,charge=0)=>{const id=String(atoms.length);atoms.push({id,element,x,y,...(charge?{charge}:{})});return id;};
   const bond=(a:string,b:string,order:1|2|3=1)=>bonds.push({a,b,order});
   const attach=(id:string,e:Element,dx:number,dy:number,order:1|2|3=1,charge=0)=>{const a=atoms.find(a=>a.id===id)!;const b=add(e,a.x+dx,a.y+dy,charge);bond(id,b,order);return b;};
-  if(c.kind==='cracking'){
-    const a=molecule({kind:'alkane',n:c.n}),b=molecule({kind:'alkene',n:c.m??2});
-    const dx=Math.max(...a.atoms.map(x=>x.x))+100-Math.min(...b.atoms.map(x=>x.x));
-    return {atoms:[...a.atoms,...b.atoms.map(x=>({...x,id:'b'+x.id,x:x.x+dx}))],bonds:[...a.bonds,...b.bonds.map(x=>({...x,a:'b'+x.a,b:'b'+x.b}))],autoH:true};
-  }
-  if(c.kind==='combustion'){
-    const a=add('C',110,90);attach(a,'O',-65,0,2);attach(a,'O',65,0,2);add('O',265,90);
+  if(c.kind==='water'){add('O',100,100);return {atoms,bonds,autoH:true};}
+  if(c.kind==='carbon-dioxide'){const id=add('C',100,100);attach(id,'O',-66,0,2);attach(id,'O',66,0,2);return {atoms,bonds,autoH:true};}
+  if(c.kind==='hydrogen-halide'){add(c.halogen??'Br',100,100);return {atoms,bonds,autoH:true};}
+  if((c.kind==='amine'||c.kind==='ammonium')&&c.n===0){add('N',100,100,c.kind==='ammonium'?1:0);return {atoms,bonds,autoH:true};}
+  if(c.cyclic){
+    const radius=76/(2*Math.sin(Math.PI/c.n));
+    for(let i=0;i<c.n;i++){const angle=-Math.PI/2+i*2*Math.PI/c.n;add('C',180+radius*Math.cos(angle),150+radius*Math.sin(angle));}
+    for(let i=0;i<c.n;i++)bond(String(i),String((i+1)%c.n),c.kind==='alkene'&&i===0?2:1);
+    const outward=(i:number,e:Element,order:1|2=1)=>{const angle=-Math.PI/2+i*2*Math.PI/c.n;attach(String(i),e,66*Math.cos(angle),66*Math.sin(angle),order);};
+    if(c.kind==='alcohol')outward(0,'O');
+    if(c.kind==='ketone')outward(0,'O',2);
+    if(c.kind==='haloalkane')outward(0,c.halogen??'Br');
+    if(c.kind==='dihalo'){outward(0,c.halogen??'Br');outward(1,c.halogen??'Br');}
     return {atoms,bonds,autoH:true};
   }
-  if(c.kind==='polyester'||c.kind==='polyamide'){
-    const hetero=c.kind==='polyester'?'O':'N';
-    const sequence:Element[]=['*',hetero,...Array(c.m??2).fill('C'),hetero,...Array(c.n).fill('C'),'*'];
-    sequence.forEach((e,i)=>{add(e,45+i*58,120+(i%2)*22);if(i)bond(String(i-1),String(i));});
-    const first=3+(c.m??2),last=sequence.length-2;
-    attach(String(first),'O',0,-62,2);attach(String(last),'O',0,62,2);
-    return {atoms,bonds,autoH:true,polymer:true};
-  }
-  if(c.kind==='addition-polymer'){
-    ['*','C','C','*'].forEach((e,i)=>{add(e as Element,60+i*65,120);if(i)bond(String(i-1),String(i));});
-    if(c.n===3)attach('2','C',0,-65);
-    return {atoms,bonds,autoH:true,polymer:true};
-  }
   for(let i=0;i<c.n;i++){add('C',70+i*66,120+(i%2)*28);if(i)bond(String(i-1),String(i),c.kind==='alkene'&&i===1?2:1);}
-  if(c.kind==='diacid'){for(const id of ['0',String(c.n-1)]){attach(id,'O',0,-64,2);attach(id,'O',id==='0'?-62:62,0);}return {atoms,bonds,autoH:true};}
   const pos=String(c.position??0);
   if(c.kind==='alcohol')attach(pos,'O',0,-64);
   if(c.kind==='haloalkane')attach(pos,c.halogen??'Br',0,-64);
@@ -73,10 +71,10 @@ export function molecule(c: Compound): Molecule {
 }
 export const valence=(a:Atom)=>a.element==='C'?4:a.element==='N'?(a.charge===1?4:3):a.element==='O'?(a.charge===-1?1:2):1;
 export function hydrogens(m:Molecule,a:Atom){
-  if(!m.autoH||a.element==='H'||a.element==='*')return 0;
+  if(!m.autoH||a.element==='H')return 0;
   return Math.max(0,valence(a)-m.bonds.filter(b=>b.a===a.id||b.b===a.id).reduce((s,b)=>s+b.order,0));
 }
 export function formula(m:Molecule){
-  const counts:Record<string,number>={};for(const a of m.atoms){if(a.element==='*')continue;counts[a.element]=(counts[a.element]??0)+1;counts.H=(counts.H??0)+hydrogens(m,a);}
+  const counts:Record<string,number>={};for(const a of m.atoms){counts[a.element]=(counts[a.element]??0)+1;counts.H=(counts.H??0)+hydrogens(m,a);}
   return ['C','H',...Object.keys(counts).filter(x=>x!=='C'&&x!=='H').sort()].filter(e=>counts[e]).map(e=>e+(counts[e]>1?counts[e]:'' )).join('');
 }

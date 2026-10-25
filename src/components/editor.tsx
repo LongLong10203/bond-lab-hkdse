@@ -2,15 +2,16 @@
 import { useEffect,useRef,useState } from 'react';
 import { Undo2,Redo2,Trash2,Move,Copy,Minus,Equal } from 'lucide-react';
 import type { Element,Molecule } from '@/chemistry/types';
-import { formula } from '@/chemistry/molecules';
+import { formula,molecule } from '@/chemistry/molecules';
 import { atomLabelLayout,moleculeDisplayBounds } from '@/lib/molecule-display';
 import { AtomLabel,BondLines } from './molecule';
 import { useMoleculeLayout } from './use-molecule-layout';
 const empty=():Molecule=>({atoms:[],bonds:[],autoH:true});
-const ELEMENTS:Element[]=['C','H','O','N','Cl','Br','I','*'];
+const ELEMENTS:Element[]=['C','H','O','N','Cl','Br','I'];
 export default function Editor({value,onChange,onLayout=onChange,starting,disabled=false}:{value:Molecule;onChange:(m:Molecule)=>void;onLayout?:(m:Molecule)=>void;starting?:Molecule;disabled?:boolean}){
   const svg=useRef<SVGSVGElement>(null),suppressClick=useRef(false);
   const [tool,setTool]=useState<string>('C'),[selected,setSelected]=useState<string|null>(null),[bondStart,setBondStart]=useState<string|null>(null),[past,setPast]=useState<Molecule[]>([]),[future,setFuture]=useState<Molecule[]>([]);
+  const [ringSize,setRingSize]=useState(6);
   const layout=useMoleculeLayout(value,onLayout,disabled,bondStart!==null);
   const exitTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
   const previous=useRef(value),[leaving,setLeaving]=useState<Molecule|null>(null);
@@ -31,15 +32,23 @@ export default function Editor({value,onChange,onLayout=onChange,starting,disabl
     }else setSelected(id);
   };
   const useStart=()=>{if(!starting?.atoms.length)return;const bounds=moleculeDisplayBounds(starting),dx=360-(bounds.left+bounds.right)/2,dy=170-(bounds.top+bounds.bottom)/2;commit({...structuredClone(starting),atoms:starting.atoms.map(a=>({...a,x:a.x+dx,y:a.y+dy}))},true);setSelected(null);setBondStart(null);};
+  const addRing=()=>{
+    if(disabled||value.atoms.length+ringSize>60)return;
+    const ring=molecule({kind:'alkane',n:ringSize,cyclic:true}),prefix=crypto.randomUUID().slice(0,8);
+    const bounds=moleculeDisplayBounds(ring),dx=360-(bounds.left+bounds.right)/2,dy=170-(bounds.top+bounds.bottom)/2;
+    commit({...value,atoms:[...value.atoms,...ring.atoms.map(a=>({...a,id:prefix+a.id,x:a.x+dx,y:a.y+dy}))],bonds:[...value.bonds,...ring.bonds.map(b=>({...b,a:prefix+b.a,b:prefix+b.b}))]},true);
+    setTool('move');setSelected(null);setBondStart(null);
+  };
   const helper=tool==='single'||tool==='double'?(bondStart?'Select the second atom.':'Select two atoms to connect.'):tool==='erase'?'Select an atom or bond to remove.':tool==='charge'?'Select O for − or N for +.':'Drag atoms to rearrange them.';
   return <div className={'editor '+(disabled?'editor-disabled':'')}>
-    <div className="editor-toolbar"><div className="elements" aria-label="Atoms">{ELEMENTS.map(e=><button type="button" draggable={!disabled} onDragStart={event=>event.dataTransfer.setData('element',e)} disabled={disabled} key={e} title={e==='*'?'Polymer continuation':`Add ${e}`} aria-label={e==='*'?'Add chain continuation':`Add ${e} atom`} aria-pressed={tool===e} className={tool===e?'selected':''} onClick={()=>{setTool(e);setSelected(null);setBondStart(null);}}>{e}</button>)}</div><div className="bond-tools">
+    <div className="editor-toolbar"><div className="elements" aria-label="Atoms">{ELEMENTS.map(e=><button type="button" draggable={!disabled} onDragStart={event=>event.dataTransfer.setData('element',e)} disabled={disabled} key={e} title={`Add ${e}`} aria-label={`Add ${e} atom`} aria-pressed={tool===e} className={tool===e?'selected':''} onClick={()=>{setTool(e);setSelected(null);setBondStart(null);}}>{e}</button>)}</div><div className="bond-tools">
       <button title="Single bond" aria-label="Single bond" aria-pressed={tool==='single'} className={tool==='single'?'selected':''} disabled={disabled} onClick={()=>{setTool('single');setSelected(null);setBondStart(null);}}><Minus size={19}/></button>
       <button title="Double bond" aria-label="Double bond" aria-pressed={tool==='double'} className={tool==='double'?'selected':''} disabled={disabled} onClick={()=>{setTool('double');setSelected(null);setBondStart(null);}}><Equal size={19}/></button>
       <button title="Move atoms" aria-label="Move atoms" aria-pressed={tool==='move'} className={tool==='move'?'selected':''} disabled={disabled} onClick={()=>{setTool('move');setBondStart(null);}}><Move size={17}/></button>
       <button title="Erase" aria-label="Erase atom or bond" aria-pressed={tool==='erase'} className={tool==='erase'?'selected':''} disabled={disabled} onClick={()=>{setTool('erase');setSelected(null);setBondStart(null);}}><Trash2 size={16}/></button>
       <button title="O− / N+" aria-label="Toggle atom charge" aria-pressed={tool==='charge'} className={tool==='charge'?'selected':''} disabled={disabled} onClick={()=>{setTool('charge');setBondStart(null);}}>±</button>
     </div></div>
+    <div className="ring-tools"><label>Carbon ring<select aria-label="Ring size" value={ringSize} disabled={disabled} onChange={e=>setRingSize(Number(e.target.value))}>{[3,4,5,6,7,8].map(n=><option key={n} value={n}>{n} atoms</option>)}</select></label><button className="text-button" disabled={disabled||value.atoms.length+ringSize>60} onClick={addRing}>Add ring</button></div>
     <div className="canvas-wrap"><svg ref={svg} className="drawing-canvas" viewBox="0 0 720 340" role="application" aria-label="Molecule drawing workspace" tabIndex={0}
       onKeyDown={e=>{
         if(disabled)return;

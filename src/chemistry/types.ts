@@ -1,11 +1,11 @@
-export type Element = 'C' | 'H' | 'O' | 'N' | 'F' | 'Cl' | 'Br' | 'I' | '*';
+export type Element = 'C' | 'H' | 'O' | 'N' | 'F' | 'Cl' | 'Br' | 'I';
 export type Atom = { id: string; element: Element; x: number; y: number; charge?: number };
 export type Bond = { a: string; b: string; order: 1 | 2 | 3 };
-export type Molecule = { atoms: Atom[]; bonds: Bond[]; autoH?: boolean; polymer?: boolean };
-export type Kind = 'alkane' | 'alkene' | 'haloalkane' | 'alcohol' | 'aldehyde' | 'ketone' | 'acid' | 'ester' | 'amide' | 'carboxylate' | 'amine' | 'ammonium' | 'diol' | 'dihalo' | 'addition-polymer' | 'polyester' | 'polyamide' | 'combustion' | 'cracking' | 'diacid';
-export type Compound = { kind: Kind; n: number; m?: number; position?: number; halogen?: 'Cl' | 'Br' | 'I' };
+export type Molecule = { atoms: Atom[]; bonds: Bond[]; autoH?: boolean };
+export type Kind = 'alkane' | 'alkene' | 'haloalkane' | 'alcohol' | 'aldehyde' | 'ketone' | 'acid' | 'ester' | 'amide' | 'carboxylate' | 'amine' | 'ammonium' | 'diol' | 'dihalo' | 'water' | 'carbon-dioxide' | 'hydrogen-halide';
+export type Compound = { kind: Kind; n: number; m?: number; position?: number; halogen?: 'Cl' | 'Br' | 'I'; cyclic?: boolean };
 export type Mode = 'products' | 'conditions' | 'synthesis';
-export type Reaction = { ruleId: string; start: Compound; product: Compound; conditions: string[][]; extras: string; explanation: string; hint: string };
+export type Reaction = { ruleId: string; start: Compound; product: Compound; conditions: string[][]; extras: string; explanation: string; hint: string; coProducts?: Compound[] };
 export type CoReactant = {id:string;label:string;molecule:Molecule};
 export type ChallengeData = { id: string; mode: Mode; family: string; version: string; title: string; start: Molecule; startName: string; extras: string; conditions?: string[]; target?: Molecule; targetName?: string; stepLimit?: number; instruction: string; coReactants: CoReactant[]; coProducts: CoReactant[]; reward:number; difficulty: 'Foundation'|'Intermediate'|'Advanced' };
 export type Answer = { molecule?: Molecule; conditions?: string[]; steps?: { molecule: Molecule; conditions: string[] }[] };

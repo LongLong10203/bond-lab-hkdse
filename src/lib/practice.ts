@@ -10,6 +10,11 @@ export function editStep(session:PracticeSession,index:number,patch:Partial<Step
   if(index<0||index>=session.steps.length)return session;
   return {...session,feedback:null,steps:session.steps.map((step,i)=>i===index?{...step,...patch,molecule:i===session.steps.length-1?structuredClone(session.question.target!):(patch.molecule??step.molecule)}:step)};
 }
+export function resizeSteps(session:PracticeSession,count:number):PracticeSession{
+  if(!Number.isInteger(count)||count<1||count>(session.question.stepLimit??0)||count===session.steps.length)return session;
+  const steps=Array.from({length:count},(_,i)=>i===count-1?{molecule:structuredClone(session.question.target!),conditions:[...session.steps.at(-1)!.conditions]}:i<session.steps.length-1?session.steps[i]:{molecule:emptyMolecule(),conditions:[]});
+  return {...session,steps,activeStep:Math.min(session.activeStep,count-1),feedback:null};
+}
 export function answerFor(session:PracticeSession):Answer{return session.question.mode==='synthesis'?{steps:session.steps.map((s,i)=>({...s,molecule:i===session.steps.length-1?session.question.target!:s.molecule}))}:{molecule:session.drawing,conditions:session.conditions};}
 export function missingInput(session:PracticeSession){
   if(session.question.mode==='synthesis'){
@@ -25,6 +30,6 @@ const sessionSchema=z.object({question:questionSchema,drawing:moleculeSchema,con
 export const sessionsSchema=z.object({products:sessionSchema.optional(),conditions:sessionSchema.optional(),synthesis:sessionSchema.optional()}).strict();
 export function restoreSessions(raw:string|null):Partial<Record<Mode,PracticeSession>>{
   if(!raw)return {};const output:Partial<Record<Mode,PracticeSession>>={};
-  try{const stored=JSON.parse(raw);for(const mode of ['products','conditions','synthesis'] as const){const result=sessionSchema.safeParse(stored[mode]);if(!result.success||result.data.question.mode!==mode)continue;const s=result.data;if(mode!=='products'&&!s.question.target)continue;if(mode==='synthesis'&&(s.steps.length!==s.question.stepLimit||s.activeStep>=s.steps.length))continue;output[mode]={...s,question:{...s.question,version:VERSION},feedback:null};}}catch{}
+  try{const stored=JSON.parse(raw);for(const mode of ['products','conditions','synthesis'] as const){const result=sessionSchema.safeParse(stored[mode]);if(!result.success||result.data.question.mode!==mode)continue;const s=result.data;if(mode!=='products'&&!s.question.target)continue;if(mode==='synthesis'&&(s.steps.length<1||s.steps.length>s.question.stepLimit!||s.activeStep>=s.steps.length))continue;output[mode]={...s,question:{...s.question,version:VERSION},feedback:null};}}catch{}
   return output;
 }

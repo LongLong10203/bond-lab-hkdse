@@ -2,7 +2,7 @@ import type { Mode, Reaction } from './types';
 export function rewardFor(mode:Mode,route:Reaction[]){
   if(mode==='synthesis')return {reward:50+(route.length-2)*30,difficulty:route.length===2?'Foundation' as const:route.length===3?'Intermediate' as const:'Advanced' as const};
   const r=route[0],large=r.product.n+(r.product.m??0)>5;
-  const advanced=['polyester','polyamide','addition-polymer','cracking'].includes(r.product.kind);
+  const advanced=r.ruleId.startsWith('cracking:')||!!r.product.cyclic;
   const medium=large||['ester','amide','carboxylate'].includes(r.product.kind)||r.start.kind==='amide';
   return {reward:advanced?50:medium?35:20,difficulty:advanced?'Advanced' as const:medium?'Intermediate' as const:'Foundation' as const};
 }

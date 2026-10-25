@@ -47,6 +47,45 @@ test('previews center full labels even when minimum width or height adds space',
   assert(Math.abs(v.x+v.width/2-(b.left+b.right)/2)<1e-8);
   assert(Math.abs(v.y+v.height/2-(b.top+b.bottom)/2)<1e-8);
   assert(v.width>=100&&v.height>=100);
-  assert(b.left-v.x>=15&&b.top-v.y>=15);
+  assert(b.left-v.x>=15-1e-8&&b.top-v.y>=15-1e-8);
+ }
+});
+
+test('carbon single bonds mirror symmetrically across either axis',()=>{
+ const reference=pair(100,70,'C'),first=bondSegments(reference,reference.bonds[0])[0];
+ for(const sx of [-1,1])for(const sy of [-1,1]){
+  const m=pair(sx*100,sy*70,'C'),line=bondSegments(m,m.bonds[0])[0];
+  for(const end of [1,2] as const){
+   assert(Math.abs(line[`x${end}`]-100-sx*(first[`x${end}`]-100))<1e-8);
+   assert(Math.abs(line[`y${end}`]-100-sy*(first[`y${end}`]-100))<1e-8);
+  }
+ }
+});
+test('double and triple bonds have equal lengths and aligned ends in every direction',()=>{
+ for(const order of [2,3] as const)for(const element of ['C','O','N'] as const)for(const [dx,dy] of [[100,0],[-100,0],[0,100],[0,-100],[80,80],[-80,80],[80,-80],[-80,-80]]){
+  const m=pair(dx,dy,element,order),lines=bondSegments(m,m.bonds[0]);assert.equal(lines.length,order);
+  const length=(l:typeof lines[number])=>Math.hypot(l.x2-l.x1,l.y2-l.y1);
+  for(const line of lines){
+   assert(Math.abs(length(line)-length(lines[0]))<1e-8);
+   assert(Math.abs((line.x1-lines[0].x1)*dx+(line.y1-lines[0].y1)*dy)<1e-8);
+   assert(Math.abs((line.x2-lines[0].x2)*dx+(line.y2-lines[0].y2)*dy)<1e-8);
+  }
+ }
+});
+test('displaced nitrogen hydrogens each have an explicit bond clear of the text',()=>{
+ for(const charge of [0,1]){
+  const m:Molecule={atoms:[{id:'n',element:'N',x:100,y:100,charge},{id:'a',element:'C',x:0,y:100},{id:'b',element:'C',x:200,y:100}],bonds:[{a:'n',b:'a',order:1},{a:'n',b:'b',order:1}],autoH:true};
+  // A third bonded neighbour is not needed: horizontal bonds place H above N.
+  const layout=atomLabelLayout(m.atoms[0],m),hs=layout.parts.filter(p=>p.kind==='hydrogen');
+  assert.equal(hs.length,charge+1);assert.equal(layout.hydrogenBonds.length,hs.length);
+  assert(!layout.parts.some(p=>p.kind==='subscript'));
+  for(const [i,line] of layout.hydrogenBonds.entries()){
+   assert(Math.hypot(line.x2-line.x1,line.y2-line.y1)>10);
+   assert(Math.hypot(line.x2-hs[i].x,line.y2-(hs[i].y-8))>10);
+   for(const box of layout.boxes)for(let j=0;j<=10;j++){
+    const x=line.x1+(line.x2-line.x1)*j/10,y=line.y1+(line.y2-line.y1)*j/10;
+    assert(!(x>box.left&&x<box.right&&y>box.top&&y<box.bottom));
+   }
+  }
  }
 });

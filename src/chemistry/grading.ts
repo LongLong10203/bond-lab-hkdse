@@ -8,7 +8,7 @@ export function grade(seed:number,mode:Mode,family:string,answer:Answer):Grade{
   const {reaction,route,question}=generate(seed,mode,family);
   const context=(c:Compound)=>({alcohol:isAlcohol(molecule(c)),provided:question.coReactants.map(r=>r.id)});
   if(mode==='synthesis'){
-    const steps=answer.steps??[];if(steps.length!==route.length)return {correct:false,message:`Use ${route.length} transformations. Each step needs a product and conditions.`};
+    const steps=answer.steps??[];if(steps.length<1||steps.length>route.length)return {correct:false,message:`Use between 1 and ${route.length} transformations. Each step needs a product and conditions.`};
     let current:Compound=reaction.start;
     for(let i=0;i<steps.length;i++){
       const invalid=validate(steps[i].molecule);if(invalid)return {correct:false,stepIndex:i,message:`Step ${i+1}: ${invalid}`};
@@ -22,8 +22,8 @@ export function grade(seed:number,mode:Mode,family:string,answer:Answer):Grade{
     }
     return equivalent(molecule(current),molecule(route.at(-1)!.product))?{correct:true,xp:question.reward,message:'Route complete. Every transformation checks out.',explanation:'Your route uses valid structures and conditions at every step.'}:{correct:false,message:'Your transformations are valid, but the final molecule is not the target.'};
   }
-  const alternatives=reactions(reaction.start).filter(r=>equivalent(molecule(r.product),molecule(reaction.product)));
-  const correct=mode==='conditions'?conditionsMatch(answer.conditions??[],alternatives.flatMap(r=>r.conditions),context(reaction.start)):!!answer.molecule&&(reaction.ruleId==='cracking:alkane'?reactions(reaction.start).filter(r=>r.ruleId==='cracking:alkane').some(r=>equivalent(answer.molecule!,molecule(r.product))):equivalent(answer.molecule,molecule(reaction.product)));
+  const alternatives=reactions(reaction.start).filter(r=>equivalent(molecule(r.product),molecule(reaction.product))&&(r.coProducts??[]).length===(reaction.coProducts??[]).length&&(r.coProducts??[]).every((c,i)=>equivalent(molecule(c),molecule(reaction.coProducts![i]))));
+  const correct=mode==='conditions'?conditionsMatch(answer.conditions??[],alternatives.flatMap(r=>r.conditions),context(reaction.start)):!!answer.molecule&&equivalent(answer.molecule,molecule(reaction.product));
   if(mode==='products'&&answer.molecule){const invalid=validate(answer.molecule);if(invalid)return {correct:false,message:invalid};}
   return {correct,...(correct?{xp:question.reward}:{}),message:correct?'That’s a good reaction.':mode==='conditions'?'Check the reagent, reaction medium and heating conditions. Select one valid alternative, without extra conditions.':'Check the functional group, carbon skeleton and bond orders.',...(correct?{explanation:reaction.explanation}:{})};
 }

@@ -1,7 +1,7 @@
 import type { Molecule } from './types';
 import { CONDITIONS } from './rules';
 
-export const ORGANIC_REAGENTS = ['alcohol-1','alcohol-2','alcohol-3','diol-2','diamine-2'];
+export const ORGANIC_REAGENTS = ['alcohol-1','alcohol-2','alcohol-3'];
 export const isOrganicReagent=(id:string)=>ORGANIC_REAGENTS.includes(id);
 export function isAlcohol(m?:Molecule){
   if(!m)return false;
@@ -14,7 +14,7 @@ export function isAlcohol(m?:Molecule){
 export type ConditionOption={id:string;label:string;values:string[]};
 export function reagentOptions(start?:Molecule):ConditionOption[]{
   const alcohol=isAlcohol(start);
-  return ['h2','cl2','br2','i2','hcl','hbr','hi','aq-oh','dichromate','nabh4','lialh4','conc-acid','dilute-acid','ammonia','oxygen'].map(id=>({id,
+  return ['h2','cl2','br2','i2','hcl','hbr','hi','aq-oh','ethanolic-oh','water','dichromate','nabh4','lialh4','conc-acid','dilute-acid','ammonia','oxygen'].map(id=>({id,
     label:id==='hcl'&&alcohol?'HCl / PCl₃':id==='hbr'&&alcohol?'HBr / PBr₃':id==='lialh4'?'1. LiAlH₄, dry ether → 2. H⁺(aq)':['cl2','br2','i2'].includes(id)&&!isMethane(start)?`${CONDITIONS[id]} (organic solvent)`:CONDITIONS[id],
     values:id==='lialh4'?['lialh4','workup']:['cl2','br2','i2'].includes(id)&&!isMethane(start)?[id,'organic']:[id]}));
 }
