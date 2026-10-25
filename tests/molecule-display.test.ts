@@ -145,11 +145,12 @@ test('placement shifts an attached O/N branch together and leaves stored coordin
  }
 });
 
-test('ammonium charge is a superscript after the complete NH4 label',()=>{
+test('ammonium charge sits snugly above the subscript beside H',()=>{
  const m:Molecule={atoms:[{id:'n',element:'N',charge:1,x:100,y:100}],bonds:[],autoH:true};
  const l=atomLabelLayout(m.atoms[0],m),charge=l.parts.find(p=>p.kind==='charge')!,h=l.parts.find(p=>p.kind==='hydrogen')!,count=l.parts.find(p=>p.kind==='subscript')!;
  assert.equal(count.text,'4');assert.equal(charge.text,'+');
- assert(charge.x-charge.width/2>Math.max(...l.parts.filter(p=>p.kind!=='charge').map(p=>p.x+p.width/2)));
+ assert.equal(charge.x,h.x+h.width/2+4);
+ assert(Math.abs(charge.x-count.x)<=3);
  assert(charge.y<h.y);assert(charge.size<h.size);
  const v=moleculeViewBox(m);assert(v.x+v.width>=100+charge.x+charge.width/2+15);
 });
@@ -168,5 +169,14 @@ test('halogen and explicit hydrogen bonds connect actual C and element symbols w
   }
   const [reverse]=bondSegments(m,{a:'b',b:'a',order:1});
   assert(Math.abs(reverse.x2-line.x1)+Math.abs(reverse.y2-line.y1)+Math.abs(reverse.x1-line.x2)+Math.abs(reverse.y1-line.y2)<1e-8);
+ }
+});
+
+test('oxygen charges sit close to the upper-right of the element',()=>{
+ for(const autoH of [true,false]){
+  const m:Molecule={atoms:[{id:'o',element:'O',charge:-1,x:100,y:100},{id:'c',element:'C',x:0,y:100}],bonds:[{a:'c',b:'o',order:1}],autoH};
+  const l=atomLabelLayout(m.atoms[0],m),o=l.parts.find(p=>p.kind==='element')!,charge=l.parts.find(p=>p.kind==='charge')!;
+  assert.equal(charge.x,o.x+o.width/2+4);assert.equal(charge.y,o.y-14);assert.equal(charge.text,'−');
+  assert.equal(bondSegments(m,m.bonds[0]).length,1);
  }
 });

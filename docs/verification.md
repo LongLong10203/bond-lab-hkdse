@@ -4,11 +4,12 @@
 
 636 enumerated assessed reaction variants, 46 rule variants; 12 reaction families plus the all-reactions selector. Polymer questions are removed; cyclic compounds and acid–base transformations are included.
 
-- 62 unit/regression tests pass, including all generated reactant/product valences, amide coproduct charge states, variable assessed hydrolysis products, cracking conservation, ring formulas/graph equivalence, ring-preserving layout, shorter saved routes and obsolete-seed rejection.
+- 63 unit/regression tests pass, including all generated reactant/product valences, amide coproduct charge states, variable assessed hydrolysis products, cracking conservation, ring formulas/graph equivalence, ring-preserving layout, shorter saved routes and obsolete-seed rejection.
 - Independent breadth-first traversal checks 100 seeded synthesis routes for shortcuts. All 24 primary haloalkane/halogen homologues (C1–C8, Cl/Br/I) reach carboxylate in three transformations.
 - All 20 local HTTP/PostgreSQL integration tests pass: grading, persistence, account isolation, XP idempotency, profiles, deletion, tutorial completion, invalid inputs and database failure handling. Test credentials now follow Next.js environment-file precedence.
 - Browser checks cover the ring tool, converting a five-carbon ring from C5H10 to C5H8 by editing a bond, supplied amide coproducts, cyclic focus, and adjustable synthesis steps.
-- Drawing checks verify mirrored carbon-group diagonals, equal-length double/triple bonds in eight directions, actual C/O/N symbol endpoints in both bond orders, C–halogen and explicit C–H endpoints, NH₄⁺ charge placement, preserved bond directions and attached-branch placement, explicit displaced N–H bonds, full-label selection circles and centred previews. Tall ring diagrams get extra vertical space.
+- Drawing checks verify mirrored carbon-group diagonals, equal-length double/triple bonds in eight directions, actual C/O/N symbol endpoints in both bond orders, C–halogen and explicit C–H endpoints, compact NH₄⁺ and O⁻ charge placement, preserved bond directions and attached-branch placement, explicit displaced N–H bonds, full-label selection circles and centred previews. Tall ring diagrams get extra vertical space.
+- Profile emails are returned only to authenticated school accounts; leaderboard rows omit them. Header emails are removed, and profile/welcome privacy text reflects school-only visibility.
 - Older unfinished questions refresh under the new version. Existing account progress is retained.
 
 ## Historical verification (superseded chemistry rules)

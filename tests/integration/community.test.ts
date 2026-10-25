@@ -24,7 +24,9 @@ test('leaderboard is descending by XP, stable at ties, and exposes only public s
   assert.deepEqual(Object.keys(entry).sort(),['id','displayName','xp','level','completed','rank','isYou'].sort());
   const profile=await(await accountRequest(`leaderboard/${a.id}`,b)).json();
   assert.equal(profile.rank,entry.rank);assert.equal(profile.isYou,false);assert.deepEqual(profile.byMode,{products:0,conditions:0,synthesis:0});
-  for(const key of ['email','name','image','drafts','sessions','accounts','attempts','correct','token'])assert.equal(key in profile,false);
+  assert.equal(profile.email,`test-${a.id}@syss.edu.hk`);
+  for(const viewer of [null,wrong,await account('syss.edu.hk',false)])assert.equal((await accountRequest(`leaderboard/${a.id}`,viewer)).status,401);
+  for(const key of ['name','image','drafts','sessions','accounts','attempts','correct','token'])assert.equal(key in profile,false);
   assert.equal((await accountRequest(`leaderboard/${wrong.id}`,a)).status,404);
   assert.equal((await accountRequest('leaderboard?page=-1',a)).status,400);
   assert.equal((await accountRequest('leaderboard?page=2',a)).status,200);

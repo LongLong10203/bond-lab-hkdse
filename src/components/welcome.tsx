@@ -24,6 +24,6 @@ export default function Welcome({googleReady,loginError}:{googleReady:boolean;lo
     {!googleReady&&<p className="account-notice">Google sign-in is not available yet. You can still play as a guest.</p>}
     {error&&<p className="account-notice" role="alert">{error}</p>}
     <div className="welcome-or"><span/>or<span/></div><button className="guest-play" disabled={busy} onClick={guest}>Play as guest<ArrowRight size={17}/></button><p className="welcome-guest-note">Practice freely. Drawings stay in this browser; levels and the leaderboard are for signed-in players.</p>
-    <p className="welcome-privacy">The school leaderboard shows a nickname and practice stats. Your email and drawings stay private.</p>
+    <p className="welcome-privacy">The school leaderboard shows your nickname and practice stats. Signed-in school players can see your email on your profile. Your drawings stay private.</p>
   </section><p className="welcome-footer">An independent learning project. Not affiliated with HKEAA.</p></main>;
 }

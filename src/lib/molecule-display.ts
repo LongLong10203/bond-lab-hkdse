@@ -33,10 +33,10 @@ function rawAtomLabelLayout(atom:Atom,molecule:Molecule){
     }
   }
   if(atom.charge){
-    // A condensed ion's charge belongs after the whole label (NH₄⁺),
-    // not over its H. Displaced explicit H atoms keep the charge beside N.
-    const right=Math.max(...parts.map(p=>p.x+p.width/2));
-    parts.push({text:atom.charge>0?'+':'−',x:direction.y?w/2+(h>1?18:7):right+7,y:-9,size:13,width:10,kind:'charge'});
+    // Stack the superscript beside the final full-size letter, above any
+    // subscript (NH₄⁺). Displaced H atoms keep the charge beside N.
+    const right=direction.y?w/2:Math.max(...parts.filter(p=>p.kind!=='subscript').map(p=>p.x+p.width/2));
+    parts.push({text:atom.charge>0?'+':'−',x:right+4,y:-6,size:13,width:10,kind:'charge'});
   }
   const partBox=(p:Part):Box=>({left:p.x-p.width/2-3,right:p.x+p.width/2+3,top:p.y-p.size*0.8-3,bottom:p.y+3});
   const union=(boxes:Box[]):Box=>({left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))});
