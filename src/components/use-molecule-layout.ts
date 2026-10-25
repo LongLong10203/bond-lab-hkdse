@@ -5,7 +5,7 @@ import { clampPoint,layoutTick,withPositions,type Point,type Positions } from '@
 export function useMoleculeLayout(value:Molecule,onLayout:(m:Molecule)=>void,disabled:boolean,paused=false){
   const [flexible,setFlexible]=useState(true),[reducedMotion,setReducedMotion]=useState(false),[positions,setPositions]=useState<Positions>({});
   const points=useRef<Positions>({}),current=useRef(value),persist=useRef(onLayout),frame=useRef(0),iterations=useRef(0),skip=useRef<Molecule|null>(null);
-  const pinned=useRef<{id:string;point:Point}|undefined>(undefined),drag=useRef<{start:Molecule;point:Point;moved:boolean}|null>(null);
+  const pinned=useRef<{id:string;point:Point}|undefined>(undefined),drag=useRef<{start:Molecule;point:Point;origin:Point;moved:boolean}|null>(null);
   const running=useRef({flexible,disabled,reducedMotion,paused});current.current=value;persist.current=onLayout;running.current={flexible,disabled,reducedMotion,paused};
   const snapshot=()=>withPositions(current.current,points.current);
   const stop=()=>{cancelAnimationFrame(frame.current);frame.current=0;};
@@ -29,9 +29,9 @@ export function useMoleculeLayout(value:Molecule,onLayout:(m:Molecule)=>void,dis
     // Settings pause animation without resetting the current rendered coordinates.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[flexible,reducedMotion,disabled,paused]);
-  const startDrag=(id:string,point:Point)=>{stop();drag.current={start:snapshot(),point,moved:false};pinned.current={id,point:points.current[id]??point};};
+  const startDrag=(id:string,point:Point)=>{stop();const origin=points.current[id]??point;drag.current={start:snapshot(),point,origin,moved:false};pinned.current={id,point:origin};};
   const moveDrag=(point:Point)=>{
-    if(!drag.current||!pinned.current)return;const bounded=clampPoint(point);if(Math.hypot(bounded.x-drag.current.point.x,bounded.y-drag.current.point.y)>4)drag.current.moved=true;
+    if(!drag.current||!pinned.current)return;const bounded=clampPoint({x:drag.current.origin.x+point.x-drag.current.point.x,y:drag.current.origin.y+point.y-drag.current.point.y});if(Math.hypot(point.x-drag.current.point.x,point.y-drag.current.point.y)>4)drag.current.moved=true;
     if(!drag.current.moved)return;
     pinned.current.point=bounded;points.current={...points.current,[pinned.current.id]:bounded};setPositions(points.current);kick();
   };

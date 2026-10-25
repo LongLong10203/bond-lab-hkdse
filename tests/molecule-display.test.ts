@@ -11,11 +11,10 @@ test('horizontal element and H glyphs share size and baseline; only counts are l
 test('bonds attach to the element symbol in every direction and never terminate at implicit H',()=>{
  for(const element of ['O','N'] as const)for(const [dx,dy] of [[100,0],[-100,0],[0,100],[0,-100],[80,80],[-80,80],[80,-80],[-80,-80]]){
   const m=pair(dx,dy,element),layout=atomLabelLayout(m.atoms[0],m),s=bondSegments(m,m.bonds[0])[0];assert(s);
-  assert.equal(layout.parts.find(p=>p.kind==='element')!.x,0);
-  assert(Math.hypot(s.x1-100,s.y1-100)<24,element+' bond starts near the central element');
-  assert((s.x1-100)*dx+(s.y1-100)*dy>0);
-  const cp=atomLabelLayout(m.atoms[1],m).parts.find(p=>p.kind==='element')!;
-  assert(Math.abs((s.x1-100)*(dy+cp.y-8)-(s.y1-100)*(dx+cp.x))<1e-6);
+  const p=layout.parts.find(p=>p.kind==='element')!;
+  assert(Math.hypot(s.x1-100-p.x,s.y1-100-p.y+8)<24,element+' bond starts near the central element');
+  assert((s.x1-100-p.x)*dx+(s.y1-100-p.y+8)*dy>0);
+  assert(Math.abs((s.x1-100-p.x)*dy-(s.y1-100-p.y+8)*dx)<1e-6);
   assert(layout.direction.x*dx+layout.direction.y*dy<=0);
  }
 });
@@ -121,6 +120,27 @@ test('middle carbon retains group anchoring to C but symbol anchoring to O/N',()
   assert.equal(c.y,h.y);
   for(const bond of m.bonds.slice(0,2)){const line=bondSegments(m,bond)[0];assert.equal(line.y1,100);assert.equal(line.y2,100);}
   const line=bondSegments(m,m.bonds[2])[0];
-  assert(Math.abs((line.x1-100-c.x)*(0-100-c.y+8)-(line.y1-100-c.y+8)*(-c.x))<1e-8);
+  assert(Math.abs(line.x1-100-c.x)<1e-8);assert.equal(line.x1,line.x2);
+ }
+});
+
+test('element-anchored bonds preserve the drawn vertical, horizontal and diagonal directions',()=>{
+ for(const element of ['O','N'] as const)for(const order of [1,2] as const)for(const [dx,dy] of [[100,0],[-100,0],[0,100],[0,-100],[80,80],[-80,80],[80,-80],[-80,-80]]){
+  const m=pair(dx,dy,element,order);
+  const anchors=m.atoms.map(a=>{const p=atomLabelLayout(a,m).parts.find(p=>p.kind==='element')!;return {x:a.x+p.x,y:a.y+p.y-8};});
+  assert(Math.abs(anchors[1].x-anchors[0].x-dx)<1e-8);
+  assert(Math.abs(anchors[1].y-anchors[0].y-dy)<1e-8);
+  for(const l of bondSegments(m,m.bonds[0]))assert(Math.abs((l.x2-l.x1)*dy-(l.y2-l.y1)*dx)<1e-8);
+ }
+});
+test('placement shifts an attached O/N branch together and leaves stored coordinates untouched',()=>{
+ for(const element of ['O','N'] as const){
+  const m:Molecule={atoms:[{id:'a',element:'C',x:0,y:100},{id:'c',element:'C',x:100,y:100},{id:'z',element,x:100,y:0},{id:'b',element:'C',x:200,y:0}],bonds:[{a:'a',b:'c',order:1},{a:'c',b:'z',order:1},{a:'z',b:'b',order:1}],autoH:true};
+  const before=structuredClone(m);
+  for(const b of m.bonds){const a=m.atoms.find(a=>a.id===b.a)!,c=m.atoms.find(a=>a.id===b.b)!,dx=c.x-a.x,dy=c.y-a.y;
+   for(const l of bondSegments(m,b))assert(Math.abs((l.x2-l.x1)*dy-(l.y2-l.y1)*dx)<1e-8);
+  }
+  assert.deepEqual(m,before);
+  const bounds=moleculeDisplayBounds(m),v=moleculeViewBox(m);assert(Math.abs(v.x+v.width/2-(bounds.left+bounds.right)/2)<1e-8);
  }
 });

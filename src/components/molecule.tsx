@@ -10,9 +10,11 @@ export function BondLines({molecule,onBondClick,animate=false}:{molecule:Molecul
   return <>{molecule.bonds.map((b,i)=>{
     const a=molecule.atoms.find(a=>a.id===b.a),c=molecule.atoms.find(a=>a.id===b.b);if(!a||!c)return null;
     const segments=bondSegments(molecule,b);
+    const first=segments[0],last=segments.at(-1);
+    const hit=first&&last?{x1:(first.x1+last.x1)/2,y1:(first.y1+last.y1)/2,x2:(first.x2+last.x2)/2,y2:(first.y2+last.y2)/2}:{x1:a.x,y1:a.y,x2:c.x,y2:c.y};
     return <g key={`${b.a}-${b.b}-${b.order}`} className={animate?'bond-entrance':undefined} onClick={e=>{if(onBondClick){e.stopPropagation();onBondClick(i);}}}>
       {segments.map((segment,index)=><line key={index} className="bond-stroke" pathLength="1" {...segment} stroke="#555f56" strokeWidth="2" strokeLinecap="round"/>)}
-      {onBondClick&&<line x1={a.x} y1={a.y} x2={c.x} y2={c.y} stroke="transparent" strokeWidth="18" style={{cursor:'pointer'}}/>}
+      {onBondClick&&<line {...hit} stroke="transparent" strokeWidth="18" style={{cursor:'pointer'}}/>}
     </g>;
   })}</>;
 }

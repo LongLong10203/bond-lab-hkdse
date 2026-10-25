@@ -5,7 +5,7 @@ type Segment={x1:number;y1:number;x2:number;y2:number};
 type Box={left:number;right:number;top:number;bottom:number};
 const widths:Record<Atom['element'],number>={C:16,H:16,O:17,N:16,F:14,Cl:21,Br:23,I:7};
 const directions=[{x:1,y:0},{x:-1,y:0},{x:0,y:-1},{x:0,y:1}];
-export function atomLabelLayout(atom:Atom,molecule:Molecule){
+function rawAtomLabelLayout(atom:Atom,molecule:Molecule){
   const original=molecule.atoms.find(a=>a.id===atom.id)??atom;
   const neighbours=molecule.bonds.filter(b=>b.a===atom.id||b.b===atom.id).map(b=>molecule.atoms.find(a=>a.id===(b.a===atom.id?b.b:b.a))).filter((a):a is Atom=>!!a);
   const directionalNeighbours=atom.element==='C'?neighbours.filter(a=>a.element==='O'||a.element==='N'):neighbours;
@@ -54,6 +54,41 @@ export function atomLabelLayout(atom:Atom,molecule:Molecule){
   const radius=Math.max(27,Math.hypot(bounds.right-bounds.left,bounds.bottom-bounds.top)/2+3);
   return {parts,boxes,bounds,direction,center,radius,hydrogenBonds};
 }
+const usesElementAnchors=(a:Atom,b:Atom)=>(a.element==='C'&&(b.element==='O'||b.element==='N'))||(b.element==='C'&&(a.element==='O'||a.element==='N'));
+type LabelLayout=ReturnType<typeof rawAtomLabelLayout>&{offset:{x:number;y:number}};
+// Molecule snapshots are immutable during rendering. Reuse one placement pass
+// for previews, bonds, selection rings and editor labels in the same frame.
+const placedLabels=new WeakMap<Molecule,Map<string,LabelLayout>>();
+export function atomLabelLayout(atom:Atom,molecule:Molecule):LabelLayout{
+  let placed=placedLabels.get(molecule);
+  if(!placed){
+    const raw=new Map(molecule.atoms.map(a=>[a.id,rawAtomLabelLayout(a,molecule)]));
+    const atoms=new Map(molecule.atoms.map(a=>[a.id,a]));
+    const adjacent=new Map(molecule.atoms.map(a=>[a.id,[] as string[]]));
+    for(const bond of molecule.bonds){adjacent.get(bond.a)?.push(bond.b);adjacent.get(bond.b)?.push(bond.a);}
+    const offsets=new Map<string,{x:number;y:number}>();
+    // Preserve the drawn directions by translating attached labels/branches,
+    // rather than bending a bond from the group centre to the C glyph.
+    const roots=[...molecule.atoms.filter(a=>a.element==='C'),...molecule.atoms.filter(a=>a.element!=='C')];
+    for(const root of roots){
+      if(offsets.has(root.id))continue;
+      offsets.set(root.id,{x:0,y:0});const queue=[root.id];
+      for(const id of queue)for(const next of adjacent.get(id)??[]){
+        if(offsets.has(next)||!atoms.has(next))continue;
+        const a=atoms.get(id)!,b=atoms.get(next)!,offset=offsets.get(id)!;
+        const ap=raw.get(id)!.parts.find(p=>p.kind==='element')!,bp=raw.get(next)!.parts.find(p=>p.kind==='element')!;
+        offsets.set(next,usesElementAnchors(a,b)?{x:offset.x+ap.x-bp.x,y:offset.y+ap.y-bp.y}:{...offset});queue.push(next);
+      }
+    }
+    const translate=(b:Box,x:number,y:number):Box=>({left:b.left+x,right:b.right+x,top:b.top+y,bottom:b.bottom+y});
+    placed=new Map(molecule.atoms.map(a=>{
+      const label=raw.get(a.id)!,offset=offsets.get(a.id)!,{x,y}=offset;
+      return [a.id,{...label,offset,parts:label.parts.map(p=>({...p,x:p.x+x,y:p.y+y})),boxes:label.boxes.map(b=>translate(b,x,y)),bounds:translate(label.bounds,x,y),center:{x:label.center.x+x,y:label.center.y+y},hydrogenBonds:label.hydrogenBonds.map(l=>({x1:l.x1+x,y1:l.y1+y,x2:l.x2+x,y2:l.y2+y}))}];
+    }));
+    placedLabels.set(molecule,placed);
+  }
+  return placed.get(atom.id)??{...rawAtomLabelLayout(atom,molecule),offset:{x:0,y:0}};
+}
 export function moleculeDisplayBounds(molecule:Molecule):Box{
   if(!molecule.atoms.length)return {left:0,right:0,top:0,bottom:0};
   const boxes=molecule.atoms.map(atom=>{const b=atomLabelLayout(atom,molecule).bounds;return {left:atom.x+b.left,right:atom.x+b.right,top:atom.y+b.top,bottom:atom.y+b.bottom};});
@@ -79,10 +114,10 @@ export function bondSegments(molecule:Molecule,bond:Bond){
   // Coincident graph nodes have no drawable bond, even if their labels differ.
   if(Math.hypot(b.x-a.x,b.y-a.y)<1)return [];
   const al=atomLabelLayout(a,molecule),bl=atomLabelLayout(b,molecule);
-  const elementBond=(a.element==='C'&&(b.element==='O'||b.element==='N'))||(b.element==='C'&&(a.element==='O'||a.element==='N'));
+  const elementBond=usesElementAnchors(a,b);
   const anchor=(atom:Atom,label:ReturnType<typeof atomLabelLayout>)=>{
     const part=label.parts.find(p=>p.kind==='element')!;
-    const offset=elementBond?{x:part.x,y:part.y-8}:{x:0,y:0};
+    const offset=elementBond?{x:part.x,y:part.y-8}:label.offset;
     const boxes=atom.element==='C'&&!elementBond?[label.bounds]:label.boxes;
     return {x:atom.x+offset.x,y:atom.y+offset.y,boxes:boxes.map(b=>({left:b.left-offset.x,right:b.right-offset.x,top:b.top-offset.y,bottom:b.bottom-offset.y}))};
   };
