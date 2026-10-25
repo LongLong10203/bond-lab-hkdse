@@ -8,10 +8,10 @@ const directions=[{x:1,y:0},{x:-1,y:0},{x:0,y:-1},{x:0,y:1}];
 function rawAtomLabelLayout(atom:Atom,molecule:Molecule){
   const original=molecule.atoms.find(a=>a.id===atom.id)??atom;
   const neighbours=molecule.bonds.filter(b=>b.a===atom.id||b.b===atom.id).map(b=>molecule.atoms.find(a=>a.id===(b.a===atom.id?b.b:b.a))).filter((a):a is Atom=>!!a);
-  const directionalNeighbours=atom.element==='C'?neighbours.filter(a=>a.element==='O'||a.element==='N'):neighbours;
+  const directionalNeighbours=atom.element==='C'?neighbours.filter(a=>a.element!=='C'):neighbours;
   const vectors=directionalNeighbours.map(a=>{const dx=a.x-original.x,dy=a.y-original.y,len=Math.hypot(dx,dy)||1;return {x:dx/len,y:dy/len};});
   // Carbon–carbon bonds use the condensed group. Keep H clear of any
-  // carbon–oxygen/nitrogen bond, which must attach to the C glyph itself.
+  // carbon–noncarbon bond, which must attach to the C glyph itself.
   const score=(d:{x:number;y:number})=>vectors.reduce((n,v)=>n+Math.pow(Math.max(0,d.x*v.x+d.y*v.y),4),0);
   const direction=directions.reduce((best,d)=>score(d)<score(best)-0.001?d:best,directions[0]);
   const w=widths[atom.element],h=hydrogens(molecule,atom);
@@ -32,7 +32,12 @@ function rawAtomLabelLayout(atom:Atom,molecule:Molecule){
       if(h>1)parts.push({text:String(h),x:left+20,y:13,size:13,width:8,kind:'subscript'});
     }
   }
-  if(atom.charge)parts.push({text:atom.charge>0?'+':'−',x:w/2+(direction.y&&h>1?18:7),y:-9,size:13,width:10,kind:'charge'});
+  if(atom.charge){
+    // A condensed ion's charge belongs after the whole label (NH₄⁺),
+    // not over its H. Displaced explicit H atoms keep the charge beside N.
+    const right=Math.max(...parts.map(p=>p.x+p.width/2));
+    parts.push({text:atom.charge>0?'+':'−',x:direction.y?w/2+(h>1?18:7):right+7,y:-9,size:13,width:10,kind:'charge'});
+  }
   const partBox=(p:Part):Box=>({left:p.x-p.width/2-3,right:p.x+p.width/2+3,top:p.y-p.size*0.8-3,bottom:p.y+3});
   const union=(boxes:Box[]):Box=>({left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))});
   if(direction.y){
@@ -54,7 +59,7 @@ function rawAtomLabelLayout(atom:Atom,molecule:Molecule){
   const radius=Math.max(27,Math.hypot(bounds.right-bounds.left,bounds.bottom-bounds.top)/2+3);
   return {parts,boxes,bounds,direction,center,radius,hydrogenBonds};
 }
-const usesElementAnchors=(a:Atom,b:Atom)=>(a.element==='C'&&(b.element==='O'||b.element==='N'))||(b.element==='C'&&(a.element==='O'||a.element==='N'));
+const usesElementAnchors=(a:Atom,b:Atom)=>(a.element==='C'&&b.element!=='C')||(b.element==='C'&&a.element!=='C');
 type LabelLayout=ReturnType<typeof rawAtomLabelLayout>&{offset:{x:number;y:number}};
 // Molecule snapshots are immutable during rendering. Reuse one placement pass
 // for previews, bonds, selection rings and editor labels in the same frame.

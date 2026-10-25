@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { atomLabelLayout,bondSegments,moleculeDisplayBounds,moleculeViewBox } from '../src/lib/molecule-display';
-import type { Molecule } from '../src/chemistry/types';
-function pair(dx:number,dy:number,element:'O'|'C'|'N'='O',order:1|2|3=1):Molecule{return {atoms:[{id:'a',element,x:100,y:100},{id:'b',element:'C',x:100+dx,y:100+dy}],bonds:[{a:'a',b:'b',order}],autoH:true};}
+import type { Atom,Molecule } from '../src/chemistry/types';
+function pair(dx:number,dy:number,element:Atom['element']='O',order:1|2|3=1):Molecule{return {atoms:[{id:'a',element,x:100,y:100},{id:'b',element:'C',x:100+dx,y:100+dy}],bonds:[{a:'a',b:'b',order}],autoH:true};}
 test('horizontal element and H glyphs share size and baseline; only counts are lowered',()=>{
  const m=pair(100,0,'C'),parts=atomLabelLayout(m.atoms[0],m).parts;
  const c=parts.find(p=>p.kind==='element')!,h=parts.find(p=>p.kind==='hydrogen')!,n=parts.find(p=>p.kind==='subscript')!;
@@ -142,5 +142,31 @@ test('placement shifts an attached O/N branch together and leaves stored coordin
   }
   assert.deepEqual(m,before);
   const bounds=moleculeDisplayBounds(m),v=moleculeViewBox(m);assert(Math.abs(v.x+v.width/2-(bounds.left+bounds.right)/2)<1e-8);
+ }
+});
+
+test('ammonium charge is a superscript after the complete NH4 label',()=>{
+ const m:Molecule={atoms:[{id:'n',element:'N',charge:1,x:100,y:100}],bonds:[],autoH:true};
+ const l=atomLabelLayout(m.atoms[0],m),charge=l.parts.find(p=>p.kind==='charge')!,h=l.parts.find(p=>p.kind==='hydrogen')!,count=l.parts.find(p=>p.kind==='subscript')!;
+ assert.equal(count.text,'4');assert.equal(charge.text,'+');
+ assert(charge.x-charge.width/2>Math.max(...l.parts.filter(p=>p.kind!=='charge').map(p=>p.x+p.width/2)));
+ assert(charge.y<h.y);assert(charge.size<h.size);
+ const v=moleculeViewBox(m);assert(v.x+v.width>=100+charge.x+charge.width/2+15);
+});
+test('halogen and explicit hydrogen bonds connect actual C and element symbols without tilting',()=>{
+ for(const element of ['F','Cl','Br','I','H'] as const)for(const [dx,dy] of [[110,0],[-110,0],[0,110],[0,-110],[85,85],[-85,85],[85,-85],[-85,-85]]){
+  const m=pair(dx,dy,element),layouts=m.atoms.map(a=>atomLabelLayout(a,m));
+  const anchors=layouts.map((l,i)=>{const p=l.parts.find(p=>p.kind==='element')!;return {x:m.atoms[i].x+p.x,y:m.atoms[i].y+p.y-8};});
+  const [line]=bondSegments(m,m.bonds[0]);assert(line);
+  assert(Math.abs(anchors[1].x-anchors[0].x-dx)<1e-8);assert(Math.abs(anchors[1].y-anchors[0].y-dy)<1e-8);
+  assert(Math.hypot(line.x1-anchors[0].x,line.y1-anchors[0].y)<24);
+  assert(Math.hypot(line.x2-anchors[1].x,line.y2-anchors[1].y)<24);
+  assert(Math.abs((line.x2-line.x1)*dy-(line.y2-line.y1)*dx)<1e-8);
+  for(const [i,l] of layouts.entries())for(const box of l.boxes)for(let j=0;j<=20;j++){
+   const x=line.x1+(line.x2-line.x1)*j/20-m.atoms[i].x,y=line.y1+(line.y2-line.y1)*j/20-m.atoms[i].y;
+   assert(!(x>box.left&&x<box.right&&y>box.top&&y<box.bottom));
+  }
+  const [reverse]=bondSegments(m,{a:'b',b:'a',order:1});
+  assert(Math.abs(reverse.x2-line.x1)+Math.abs(reverse.y2-line.y1)+Math.abs(reverse.x1-line.x2)+Math.abs(reverse.y1-line.y2)<1e-8);
  }
 });
