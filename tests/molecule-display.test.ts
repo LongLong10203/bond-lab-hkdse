@@ -14,7 +14,8 @@ test('bonds attach to the element symbol in every direction and never terminate 
   assert.equal(layout.parts.find(p=>p.kind==='element')!.x,0);
   assert(Math.hypot(s.x1-100,s.y1-100)<24,element+' bond starts near the central element');
   assert((s.x1-100)*dx+(s.y1-100)*dy>0);
-  assert(Math.abs((s.x1-100)*dy-(s.y1-100)*dx)<1e-6);
+  const cp=atomLabelLayout(m.atoms[1],m).parts.find(p=>p.kind==='element')!;
+  assert(Math.abs((s.x1-100)*(dy+cp.y-8)-(s.y1-100)*(dx+cp.x))<1e-6);
   assert(layout.direction.x*dx+layout.direction.y*dy<=0);
  }
 });
@@ -64,11 +65,12 @@ test('carbon single bonds mirror symmetrically across either axis',()=>{
 test('double and triple bonds have equal lengths and aligned ends in every direction',()=>{
  for(const order of [2,3] as const)for(const element of ['C','O','N'] as const)for(const [dx,dy] of [[100,0],[-100,0],[0,100],[0,-100],[80,80],[-80,80],[80,-80],[-80,-80]]){
   const m=pair(dx,dy,element,order),lines=bondSegments(m,m.bonds[0]);assert.equal(lines.length,order);
+  const vx=lines[0].x2-lines[0].x1,vy=lines[0].y2-lines[0].y1;
   const length=(l:typeof lines[number])=>Math.hypot(l.x2-l.x1,l.y2-l.y1);
   for(const line of lines){
    assert(Math.abs(length(line)-length(lines[0]))<1e-8);
-   assert(Math.abs((line.x1-lines[0].x1)*dx+(line.y1-lines[0].y1)*dy)<1e-8);
-   assert(Math.abs((line.x2-lines[0].x2)*dx+(line.y2-lines[0].y2)*dy)<1e-8);
+   assert(Math.abs((line.x1-lines[0].x1)*vx+(line.y1-lines[0].y1)*vy)<1e-8);
+   assert(Math.abs((line.x2-lines[0].x2)*vx+(line.y2-lines[0].y2)*vy)<1e-8);
   }
  }
 });
@@ -87,5 +89,38 @@ test('displaced nitrogen hydrogens each have an explicit bond clear of the text'
     assert(!(x>box.left&&x<box.right&&y>box.top&&y<box.bottom));
    }
   }
+ }
+});
+
+test('C–O and C–N bonds target both element symbols, in either order and all directions',()=>{
+ for(const element of ['O','N'] as const)for(const order of [1,2] as const)for(const [dx,dy] of [[110,0],[-110,0],[0,110],[0,-110],[85,85],[-85,85],[85,-85],[-85,-85]]){
+  const m=pair(dx,dy,element,order),layouts=m.atoms.map(a=>atomLabelLayout(a,m));
+  const anchors=layouts.map((l,i)=>{const p=l.parts.find(p=>p.kind==='element')!;return {x:m.atoms[i].x+p.x,y:m.atoms[i].y+p.y-8};});
+  const lines=bondSegments(m,m.bonds[0]),reverse=bondSegments(m,{...m.bonds[0],a:'b',b:'a'});
+  assert.equal(lines.length,order);
+  const start={x:lines.reduce((n,l)=>n+l.x1,0)/order,y:lines.reduce((n,l)=>n+l.y1,0)/order};
+  const end={x:lines.reduce((n,l)=>n+l.x2,0)/order,y:lines.reduce((n,l)=>n+l.y2,0)/order};
+  for(const [point,anchor] of [[start,anchors[0]],[end,anchors[1]]]){
+   assert(Math.hypot(point.x-anchor.x,point.y-anchor.y)<24,'bond stops at the element, not its H label');
+   const vx=anchors[1].x-anchors[0].x,vy=anchors[1].y-anchors[0].y;
+   assert(Math.abs((point.x-anchor.x)*vy-(point.y-anchor.y)*vx)<1e-8);
+  }
+  for(const line of lines){
+   assert(reverse.some(r=>Math.abs(r.x2-line.x1)+Math.abs(r.y2-line.y1)+Math.abs(r.x1-line.x2)+Math.abs(r.y1-line.y2)<1e-8));
+   for(const [i,layout] of layouts.entries())for(const box of layout.boxes)for(let j=0;j<=20;j++){
+    const x=line.x1+(line.x2-line.x1)*j/20-m.atoms[i].x,y=line.y1+(line.y2-line.y1)*j/20-m.atoms[i].y;
+    assert(!(x>box.left&&x<box.right&&y>box.top&&y<box.bottom),'bond must not cross label text');
+   }
+  }
+ }
+});
+test('middle carbon retains group anchoring to C but symbol anchoring to O/N',()=>{
+ for(const element of ['O','N'] as const){
+  const m:Molecule={atoms:[{id:'c',element:'C',x:100,y:100},{id:'a',element:'C',x:0,y:100},{id:'b',element:'C',x:200,y:100},{id:'z',element,x:100,y:0}],bonds:[{a:'c',b:'a',order:1},{a:'c',b:'b',order:1},{a:'c',b:'z',order:1}],autoH:true};
+  const layout=atomLabelLayout(m.atoms[0],m),c=layout.parts.find(p=>p.kind==='element')!,h=layout.parts.find(p=>p.kind==='hydrogen')!;
+  assert.equal(c.y,h.y);
+  for(const bond of m.bonds.slice(0,2)){const line=bondSegments(m,bond)[0];assert.equal(line.y1,100);assert.equal(line.y2,100);}
+  const line=bondSegments(m,m.bonds[2])[0];
+  assert(Math.abs((line.x1-100-c.x)*(0-100-c.y+8)-(line.y1-100-c.y+8)*(-c.x))<1e-8);
  }
 });
