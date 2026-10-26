@@ -12,6 +12,7 @@ import { authClient } from '@/lib/auth-client';
 import { useSavedPractice } from './use-saved-practice';
 import type { Player } from './account';
 import Tutorial from './tutorial';
+import ActionDock from './action-dock';
 import Editor from './editor';
 import MoleculeView from './molecule';
 import ConditionPicker from './conditions';
@@ -110,11 +111,6 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
             <section className="answer-panel"><div className="panel-heading"><span className="section-number">02</span><h2>{mode==='conditions'?'Reagents & conditions':mode==='synthesis'?`Step ${step+1}`:'Your product'}</h2>{mode==='synthesis'&&<span className="small-note">{session.steps.filter(s=>s.molecule.atoms.length&&s.conditions.length).length}/{session.steps.length} filled</span>}</div>
               {mode==='synthesis'&&<label className="route-length">Steps in your route<select aria-label="Steps in your route" disabled={busy} value={session.steps.length} onChange={e=>update(s=>resizeSteps(s,Number(e.target.value)))}>{Array.from({length:question.stepLimit!},(_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}</select></label>}
               {mode==='synthesis'&&<nav className="step-tabs" aria-label="Synthesis steps">{session.steps.map((s,i)=><button key={i} disabled={busy} aria-current={step===i?'step':undefined} className={(step===i?'active ':'')+(s.molecule.atoms.length&&s.conditions.length?'filled':'')} onClick={()=>changeStep(i)}>Step {i+1}{i===session.steps.length-1&&<small>Final</small>}<span className="draft-dot"/></button>)}</nav>}
-              <div className="answer-toolbar">
-              {inputMessage&&<p className="input-message" role="alert">{inputMessage}</p>}
-              {mode==='synthesis'&&<div className="step-actions">{step>0&&<button className="text-button" disabled={busy} onClick={()=>changeStep(step-1)}><ChevronLeft size={16}/>Previous step</button>}{step<session.steps.length-1&&<button className="step-next-button" disabled={busy} onClick={()=>changeStep(step+1)}>Next step<ArrowRight size={16}/></button>}</div>}
-              <div className="answer-actions"><button className="solution-button" disabled={busy} onClick={()=>submit(true)}><BookOpen size={17} aria-hidden="true"/>Show solution</button><button className="primary-button" disabled={busy} onClick={()=>submit()}>{busy?<LoaderCircle size={17} className="spin"/>:<Check size={18}/>} {mode==='synthesis'?'Check route':'Check answer'}</button></div>
-              </div>
               {mode!=='conditions'&&(isFinal?<div className="final-product"><span className="micro-label">FINAL PRODUCT SUPPLIED</span><MoleculeView molecule={question.target!} label={question.targetName}/><p>Choose the reagents and conditions for this last step.</p></div>:<Editor key={`${question.id}-${step}`} value={drawing!} onChange={changeDrawing} onLayout={changeLayout} starting={currentStart?.atoms.length?currentStart:undefined} disabled={busy}/>)}
               {mode!=='products'&&<ConditionPicker value={conditions} onChange={changeConditions} start={currentStart} disabled={busy}/>}
 
@@ -126,7 +122,13 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
             {feedback.route&&<div className="solution-route">{feedback.route.map((s,i)=><div key={i}><span className="micro-label">STEP {i+1}</span><MoleculeView molecule={s.molecule} label={s.name}/><strong>{s.name}</strong><p>{[...s.conditions.filter(isOrganicReagent).map(id=>coReactant(id).label),...displayConditions(s.conditions,i===0?question.start:feedback.route![i-1].molecule)].join(' · ')}</p></div>)}</div>}
           </section>}
           {player&&levelUp&&<div className="level-up" role="status"><Trophy size={20}/>Level {levelUp} reached!</div>}
-          <div className="below-workbench"><span className="save-note">{storageWarning?'Progress cannot be saved in this browser.':''}</span><button className="next-button" disabled={busy} onClick={nextChallenge}>Next challenge<ArrowRight size={16}/></button></div>
+          {storageWarning&&<p className="save-note">Progress cannot be saved in this browser.</p>}
+          <ActionDock>
+              {inputMessage&&<p className="input-message" role="alert">{inputMessage}</p>}
+              {mode==='synthesis'&&<div className="step-actions">{step>0&&<button className="text-button" disabled={busy} onClick={()=>changeStep(step-1)}><ChevronLeft size={16}/>Previous step</button>}{step<session.steps.length-1&&<button className="step-next-button" disabled={busy} onClick={()=>changeStep(step+1)}>Next step<ArrowRight size={16}/></button>}</div>}
+              <div className="answer-actions"><button className="solution-button" disabled={busy} onClick={()=>submit(true)}><BookOpen size={17} aria-hidden="true"/>Show solution</button><button className="primary-button" disabled={busy} onClick={()=>submit()}>{busy?<LoaderCircle size={17} className="spin"/>:<Check size={18}/>} {mode==='synthesis'?'Check route':'Check answer'}</button></div>
+              <button className="next-button" disabled={busy} onClick={nextChallenge}>Next challenge<ArrowRight size={16}/></button>
+          </ActionDock>
         </>}
       </div>
     </main>

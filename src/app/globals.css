@@ -72,9 +72,9 @@
 
 .player-heading>div{min-width:0}.player-heading .profile-email{overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
 
-/* Keep answering controls beside the work, even on long synthesis routes. */
+/* Keep all challenge actions in view at the bottom of the screen. */
 .compact-lab .answer-panel{overflow:clip}
-.answer-toolbar{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:10px 14px;background:var(--paper);border-block:1px solid var(--line);box-shadow:0 3px 8px #26332c0a}
+.answer-toolbar{position:fixed;bottom:0;left:var(--sidebar);right:0;z-index:10;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:12px 24px calc(12px + env(safe-area-inset-bottom));background:var(--paper);border-top:1px solid #c7d2bb;box-shadow:0 -4px 18px #26332c12}
 .answer-toolbar .input-message{flex-basis:100%;padding:8px 10px}
 .compact-lab .answer-toolbar .step-actions,.compact-lab .answer-toolbar .answer-actions{padding:0;border:0;gap:8px}
 .answer-toolbar .answer-actions{margin-left:auto}
@@ -83,4 +83,6 @@
 .answer-toolbar .step-next-button,.answer-toolbar .solution-button,.answer-toolbar .primary-button{padding:10px 12px}
 .compact-lab .next-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:13px 22px;border:1px solid #304a2c;border-radius:9px;background:#3b5736;color:#fff;font-size:14px;font-weight:700;box-shadow:0 3px 8px #26332c20}
 .compact-lab .next-button:hover:not(:disabled){background:#2c4428;box-shadow:0 4px 12px #26332c30}
-@media(max-width:660px){.answer-toolbar{padding:10px;gap:8px}.answer-toolbar .step-actions,.answer-toolbar .answer-actions{flex-basis:100%}.answer-toolbar .answer-actions>button{flex:1}.compact-lab .below-workbench{flex-wrap:wrap;gap:12px}.compact-lab .next-button{width:100%}}
+@media(max-width:660px){.answer-toolbar{padding:10px 12px calc(10px + env(safe-area-inset-bottom));gap:8px}.answer-toolbar .step-actions,.answer-toolbar .answer-actions{flex-basis:100%}.answer-toolbar .answer-actions>button{flex:1}.compact-lab .below-workbench{flex-wrap:wrap;gap:12px}.compact-lab .next-button{width:100%}}
+
+.action-dock-space{flex-shrink:0;margin-top:16px}.answer-toolbar .next-button{margin-left:auto}.answer-toolbar .input-message{max-height:20dvh;overflow:auto}.answer-toolbar .step-actions:empty{display:none}
