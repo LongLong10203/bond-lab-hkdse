@@ -27,6 +27,14 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
   const session=sessions[mode],question=session?.question,active=MODES.find(m=>m.id===mode)!,level=levelFor(progress.xp);
   const showTour=ready&&!loading&&!!session&&!dialog&&(!tutorialCompleted||replayTour);
   const finishTour=async()=>{const saved=await completeTutorial();if(saved)setReplayTour(false);return saved;};
+  useEffect(() => {
+    const resumePractice = (event: PageTransitionEvent) => {
+      // Browser Back can restore the page with its pre-navigation busy state.
+      if (event.persisted) setAccountBusy(false);
+    };
+    window.addEventListener('pageshow', resumePractice);
+    return () => window.removeEventListener('pageshow', resumePractice);
+  }, []);
   useEffect(()=>{
     if(!ready)return;
     const id=++requestId.current;setError('');setInputMessage('');setLevelUp(null);
