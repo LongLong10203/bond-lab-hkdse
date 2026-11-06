@@ -125,8 +125,25 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
           {storageWarning&&<p className="save-note">Progress cannot be saved in this browser.</p>}
           <ActionDock>
               {inputMessage&&<p className="input-message" role="alert">{inputMessage}</p>}
-              {mode==='synthesis'&&<div className="step-actions">{step>0&&<button className="text-button" disabled={busy} onClick={()=>changeStep(step-1)}><ChevronLeft size={16}/>Previous step</button>}{step<session.steps.length-1&&<button className="step-next-button" disabled={busy} onClick={()=>changeStep(step+1)}>Next step<ArrowRight size={16}/></button>}</div>}
-              <div className="answer-actions"><button className="solution-button" disabled={busy} onClick={()=>submit(true)}><BookOpen size={17} aria-hidden="true"/>Show solution</button><button className="primary-button" disabled={busy} onClick={()=>submit()}>{busy?<LoaderCircle size={17} className="spin"/>:<Check size={18}/>} {mode==='synthesis'?'Check route':'Check answer'}</button></div>
+              <div className={mode === 'synthesis' ? 'answer-actions route-actions' : 'answer-actions'}>
+                {mode === 'synthesis' && !isFinal && (
+                  <button className="step-next-button" disabled={busy} onClick={() => changeStep(step + 1)}>
+                    Next step <ArrowRight size={16}/>
+                  </button>
+                )}
+                <button className="solution-button" disabled={busy} onClick={() => submit(true)}>
+                  <BookOpen size={17} aria-hidden="true"/>Show solution
+                </button>
+                <button className="primary-button" disabled={busy} onClick={() => submit()}>
+                  {busy ? <LoaderCircle size={17} className="spin"/> : <Check size={18}/>}
+                  {mode === 'synthesis' ? 'Check route' : 'Check answer'}
+                </button>
+              </div>
+              {mode === 'synthesis' && step > 0 && (
+                <button className="text-button previous-step" disabled={busy} onClick={() => changeStep(step - 1)}>
+                  <ChevronLeft size={16}/>Previous step
+                </button>
+              )}
               <button className="next-button" disabled={busy} onClick={nextChallenge}>Next challenge<ArrowRight size={16}/></button>
           </ActionDock>
         </>}

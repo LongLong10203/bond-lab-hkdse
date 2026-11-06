@@ -86,3 +86,22 @@
 @media(max-width:660px){.answer-toolbar{padding:10px 12px calc(10px + env(safe-area-inset-bottom));gap:8px}.answer-toolbar .step-actions,.answer-toolbar .answer-actions{flex-basis:100%}.answer-toolbar .answer-actions>button{flex:1}.compact-lab .below-workbench{flex-wrap:wrap;gap:12px}.compact-lab .next-button{width:100%}}
 
 .action-dock-space{flex-shrink:0;margin-top:16px}.answer-toolbar .next-button{margin-left:auto}.answer-toolbar .input-message{max-height:20dvh;overflow:auto}.answer-toolbar .step-actions:empty{display:none}
+
+/* Equal side columns keep the route controls centred as step navigation changes. */
+.answer-toolbar:has(.route-actions) {
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  grid-auto-flow: row dense;
+}
+.answer-toolbar:has(.route-actions) .input-message { grid-column: 1 / -1; }
+.answer-toolbar .route-actions { grid-column: 2; justify-content: center; margin: 0; }
+.answer-toolbar .previous-step { grid-column: 1; justify-self: start; min-height: 44px; }
+.answer-toolbar:has(.route-actions) .next-button { grid-column: 3; justify-self: end; }
+
+@media (max-width: 740px), (min-width: 901px) and (max-width: 980px) {
+  .answer-toolbar:has(.route-actions) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .answer-toolbar .route-actions { grid-column: 1 / -1; flex-wrap: wrap; }
+  .answer-toolbar .route-actions > button { flex: 0 1 auto; padding-inline: 8px; gap: 5px; }
+  .answer-toolbar:has(.route-actions) .next-button { grid-column: 1 / -1; }
+  .answer-toolbar .previous-step + .next-button { grid-column: 2; }
+}
