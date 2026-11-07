@@ -8,20 +8,34 @@ export function random(seed:number){let t=seed>>>0;return ()=>{t+=0x6D2B79F5;let
 const pool=startingCompounds().flatMap(reactions);
 export const coverage=()=>({variants:pool.length,rules:new Set(pool.map(r=>r.ruleId)).size});
 function same(a:Compound,b:Compound){return equivalent(molecule(a),molecule(b));}
-export function shortestRouteLength(start:Compound,end:Compound,max:number){
-  if(same(start,end))return 0;
-  let queue=[start];const seen=[start];
-  for(let d=1;d<=max;d++){const next:Compound[]=[];for(const c of queue)for(const r of reactions(c)){
-    if(same(r.product,end))return d;
-    if(!seen.some(c=>same(c,r.product))){seen.push(r.product);next.push(r.product);}
-  }queue=next;}return Infinity;
+export function shortestRoute(start: Compound, end: Compound, max: number): Reaction[] | null {
+  if (same(start, end)) return [];
+  let frontier: { compound: Compound; route: Reaction[] }[] = [{ compound: start, route: [] }];
+  const seen = [start];
+  for (let depth = 1; depth <= max; depth++) {
+    const next: typeof frontier = [];
+    for (const entry of frontier) {
+      for (const reaction of reactions(entry.compound)) {
+        const route = [...entry.route, reaction];
+        if (same(reaction.product, end)) return route;
+        if (seen.some(compound => same(compound, reaction.product))) continue;
+        seen.push(reaction.product);
+        next.push({ compound: reaction.product, route });
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+export function shortestRouteLength(start: Compound, end: Compound, max: number) {
+  return shortestRoute(start, end, max)?.length ?? Infinity;
 }
 export function generate(seed:number,mode:Mode,family='all'):{question:Omit<ChallengeData,'id'>;reaction:Reaction;route:Reaction[]}{
   const rng=random(seed);const pick=<T,>(a:T[])=>a[Math.floor(rng()*a.length)];
   let route:Reaction[]=[];
   if(mode==='synthesis'){
     const steps=2+Math.floor(rng()*3);
-    // Enumerate bounded simple paths. Reject shorter solutions and reversible detours.
+    // Sample targets, then use an actual shortest route to set the required count.
     const starters=startingCompounds().filter(c=>c.n>=2&&(c.n<=5||c.cyclic)&&!['ester','amide','alkane'].includes(c.kind));
     for(let attempt=0;attempt<150&&!route.length;attempt++){
       const start=pick(starters);let current=start;const path:Reaction[]=[],visited=[start];
@@ -29,9 +43,17 @@ export function generate(seed:number,mode:Mode,family='all'):{question:Omit<Chal
         const options=reactions(current).filter(r=>familyOf(r.ruleId)!=='combustion'&&!(r.ruleId.startsWith('hydrolysis:')&&r.ruleId.endsWith('-other'))&&r.product.n>0&&!['water','carbon-dioxide','hydrogen-halide'].includes(r.product.kind)&&!visited.some(c=>same(c,r.product)));
         if(!options.length)break;const r=pick(options);path.push(r);visited.push(r.product);current=r.product;
       }
-      if(path.length===steps&&shortestRouteLength(start,current,steps)===steps)route=path;
+      if (path.length !== steps) continue;
+      const minimum = shortestRoute(start, current, steps);
+      if (!minimum || minimum.length < 2) continue;
+      if (minimum.some(r => r.ruleId.startsWith('hydrolysis:') && r.ruleId.endsWith('-other'))) continue;
+      route = minimum;
     }
-    if(!route.length){const start:Compound={kind:'haloalkane',n:2+Math.floor(rng()*4),halogen:'Br'};const first=reactions(start).find(r=>r.ruleId==='substitution:hydrolysis')!;const second=reactions(first.product).find(r=>r.ruleId==='oxidation:primary-acid')!;route=[first,second];}
+    if (!route.length) {
+      const n = 2 + Math.floor(rng() * 4);
+      route = shortestRoute({ kind: 'haloalkane', n, halogen: 'Br' }, { kind: 'acid', n }, 4) ?? [];
+      if (route.length < 2) throw new Error('No supported synthesis route found');
+    }
   }else{
     const options=pool.filter(r=>family==='all'||(family==='cyclic'?r.start.cyclic:familyOf(r.ruleId)===family));
     if(!options.length)throw new Error('Unknown reaction family');route=[pick(options)];
@@ -42,6 +64,6 @@ export function generate(seed:number,mode:Mode,family='all'):{question:Omit<Chal
     start:molecule(reaction.start),startName:name(reaction.start),extras:mode==='synthesis'?'':reaction.extras,
     ...(mode==='products'?{conditions:reaction.conditions[Math.floor(rng()*reaction.conditions.length)]}:{target:molecule(last.product),targetName:name(last.product)}),
     ...(mode==='synthesis'?{stepLimit:route.length}:{}),
-    instruction:mode==='synthesis'?`Plan a route in at most ${route.length} steps. Give each intermediate and its reagents and conditions.`:mode==='conditions'?'Select one complete set of reagents and conditions. Alternatives are accepted.':'',
+    instruction:mode==='synthesis'?`Plan a route in exactly ${route.length} steps. Give each intermediate and its reagents and conditions.`:mode==='conditions'?'Select one complete set of reagents and conditions. Alternatives are accepted.':'',
     coReactants:reactionCoReactants(route),coProducts:mode==='synthesis'?[]:reactionCoProducts(reaction),...rewardFor(mode,route)}};
 }

@@ -1,14 +1,72 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generate,shortestRouteLength } from '../src/chemistry/generate';
+import { generate,shortestRoute,shortestRouteLength } from '../src/chemistry/generate';
 import { reactions,startingCompounds,FAMILIES } from '../src/chemistry/rules';
 import { molecule,formula,name } from '../src/chemistry/molecules';
 import { equivalent,validate,conditionsMatch } from '../src/chemistry/check';
 import { grade } from '../src/chemistry/grading';
 import { reactionCoProducts } from '../src/chemistry/context';
 import { moleculeSchema } from '../src/lib/validation';
+import { reagentOptions } from '../src/chemistry/condition-options';
 import type { Compound,Molecule } from '../src/chemistry/types';
 const combine=(items:Molecule[]):Molecule=>({atoms:items.flatMap((m,i)=>m.atoms.map(a=>({...a,id:`${i}-${a.id}`}))),bonds:items.flatMap((m,i)=>m.bonds.map(b=>({...b,a:`${i}-${b.a}`,b:`${i}-${b.b}`}))),autoH:true});
+
+test('alkene hydration and haloalkane elimination are absent from all reaction rules and selectors',()=>{
+  for(const start of startingCompounds()){
+    assert(reactions(start).every(r=>!['addition:hydration','elimination:haloalkane'].includes(r.ruleId)));
+    assert(reagentOptions(molecule(start)).every(option=>!['water','ethanolic-oh'].includes(option.id)));
+  }
+  assert(reactions({kind:'alcohol',n:2}).some(r=>r.ruleId==='elimination:dehydration'));
+});
+
+test('every reachable synthesis target has a valid shortest solution within its independently computed distance',t=>{
+  const starts=startingCompounds().filter(c=>c.n>=2&&(c.n<=5||c.cyclic)&&!['ester','amide','alkane'].includes(c.kind));
+  let checked=0;
+  for(const start of starts){
+    const reached=new Map([[name(start),{compound:start,distance:0}]]);
+    let frontier=[start];
+    for(let depth=1;depth<=4;depth++){
+      const next:Compound[]=[];
+      for(const compound of frontier)for(const reaction of reactions(compound)){
+        const key=name(reaction.product);
+        if(reached.has(key))continue;
+        reached.set(key,{compound:reaction.product,distance:depth});
+        next.push(reaction.product);
+      }
+      frontier=next;
+    }
+    for(const {compound:target,distance} of reached.values()){
+      const route=shortestRoute(start,target,4);
+      assert(route,`${name(start)} -> ${name(target)} is unreachable`);
+      assert.equal(route.length,distance,`${name(start)} -> ${name(target)}`);
+      let current=start;
+      for(const step of route){
+        assert(equivalent(molecule(step.start),molecule(current)));
+        assert.equal(validate(molecule(step.product)),null);
+        assert(reactions(current).some(r=>r.ruleId===step.ruleId&&equivalent(molecule(r.product),molecule(step.product))&&conditionsMatch(step.conditions[0],r.conditions)));
+        current=step.product;
+      }
+      assert(equivalent(molecule(current),molecule(target)));
+      checked++;
+    }
+  }
+  t.diagnostic(`Audited ${checked} reachable start/target pairs from ${starts.length} synthesis starting compounds through four steps.`);
+});
+
+test('synthesis grading rejects both fewer and more steps than the required minimum',()=>{
+  for(let seed=0;seed<12;seed++){
+    const g=generate(seed,'synthesis');
+    const steps=g.route.map(r=>({molecule:molecule(r.product),conditions:r.conditions[0]}));
+    assert.equal(g.question.stepLimit,steps.length);
+    assert.match(g.question.instruction,new RegExp(`exactly ${steps.length} steps`));
+    for(const altered of [[],steps.slice(1),[...steps,steps.at(-1)!]]){
+      const result=grade(seed,'synthesis','all',{steps:altered});
+      assert.equal(result.correct,false);
+      assert.match(result.message,new RegExp(`exactly ${steps.length}`));
+    }
+    assert(grade(seed,'synthesis','all',{steps}).correct);
+  }
+});
 
 test('all primary haloalkanes reach carboxylate directly in three steps without an ester detour',()=>{
   for(let n=1;n<=8;n++)for(const halogen of ['Cl','Br','I'] as const){

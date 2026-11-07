@@ -1,0 +1,153 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,geometry,array,tabularx,booktabs,xcolor,hyperref}
+\geometry{left=19mm,right=19mm,top=21mm,bottom=20mm,headheight=14pt}
+\definecolor{ink}{HTML}{20342F}
+\definecolor{pine}{HTML}{12624F}
+\definecolor{faint}{HTML}{566960}
+\hypersetup{colorlinks=true,linkcolor=pine,urlcolor=pine,pdftitle={Bond Lab: Organic reaction methods}}
+\makeatletter
+\def\ps@guide{\def\@oddhead{\small\sffamily\textcolor{pine}{\bfseries BOND LAB}\hfil\textcolor{faint}{HKDSE organic chemistry}}\def\@oddfoot{\small\sffamily\color{faint}Reaction methods\enspace /\enspace Game rules 2026.7\hfil\thepage\,/\,6}\let\@evenhead\@oddhead\let\@evenfoot\@oddfoot}
+\makeatother
+\pagestyle{guide}
+\setlength{\parindent}{0pt}\setlength{\tabcolsep}{5pt}
+\renewcommand{\familydefault}{\sfdefault}
+\newcommand{\chem}[1]{\ensuremath{\mathrm{#1}}}
+\newcommand{\go}{\ensuremath{\rightarrow}}
+\newcommand{\id}[1]{\hyperlink{rx#1}{\textbf{#1}}}
+\newcommand{\rx}[1]{\hypertarget{rx#1}{\textcolor{pine}{\bfseries #1}}}
+\newcommand{\titleblock}[3]{{\color{pine}\small\bfseries #1\par}\vspace{6pt}{\fontsize{24}{27}\selectfont\bfseries #2\par}\vspace{7pt}#3\par\vspace{11pt}}
+\newcommand{\subhead}[1]{\par\vspace{12pt}{\large\bfseries\color{pine}#1\par}\vspace{4pt}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\rowgap}{\\[7pt]}
+\newcommand{\headrow}[1]{\toprule #1\\\midrule}
+\newcommand{\methods}{\headrow{\textbf{ID} & \textbf{Starting material and products} & \textbf{What to select}}}
+\begin{document}\color{ink}\raggedbottom
+\titleblock{PART I\quad /\quad SELECTION TO REACTION}{When do I use this reagent?}{Start with the reagent in the left column. Follow its reaction number for the full combination of reactants, catalyst and heating.}
+\normalsize
+\begin{tabularx}{\linewidth}{@{}L{.26\linewidth} Y L{.14\linewidth}@{}}
+\headrow{\textbf{Reagent in Bond Lab} & \textbf{When to choose it} & \textbf{Reaction}}
+\chem{H_2} & Saturate an alkene double bond using a metal catalyst. & \id{04}\rowgap
+\chem{Cl_2} or \chem{Br_2} & Replace one H in methane using UV, or add two halogen atoms across an alkene in organic solvent. & \id{02}, \id{05}\rowgap
+\chem{I_2} & Alkene addition in organic solvent is a game option. See the iodine note on page 3. & \id{05}\rowgap
+HCl, HBr or HI & Add HX across an alkene, or replace OH in an alcohol with the corresponding halogen. HCl also protonates carboxylates and amines. & \id{06}, \id{10}, \id{28}, \id{29}\rowgap
+\chem{PCl_3} or \chem{PBr_3} & Replace an alcohol's OH with Cl or Br. The selector groups each reagent with its corresponding hydrogen halide. & \id{10}\rowgap
+NaOH(aq) & Heat for haloalkane substitution or ester/amide hydrolysis. Use without heat to deprotonate a carboxylic acid or ammonium ion. & \id{08}, \id{22}, \id{23}, \id{25}, \id{26}, \id{27}, \id{30}\rowgap
+\chem{K_2Cr_2O_7}(aq) / \chem{H^+}(aq) & Oxidise a primary or secondary alcohol, or an aldehyde. For a primary alcohol the heating method determines which product you collect. & \id{12}--\id{15}\rowgap
+\chem{NaBH_4}(aq) & Reduce an aldehyde or ketone to an alcohol. & \id{16}, \id{17}\rowgap
+\chem{LiAlH_4} in dry ether, then \chem{H^+}(aq) & Reduce an aldehyde, ketone or carboxylic acid. Choose the combined two-stage option. & \id{16}--\id{18}\rowgap
+Concentrated \chem{H_2SO_4} & Dehydrate an alcohol, or catalyse esterification of a carboxylic acid with an alcohol. & \id{11}, \id{19}\rowgap
+Dilute \chem{H^+}(aq) & Hydrolyse an ester or amide in acid, or protonate a carboxylate or amine. & \id{21}, \id{24}, \id{28}, \id{29}\rowgap
+\chem{NH_3} & Form an unsubstituted amide from a carboxylic acid, via the ammonium salt. & \id{20}\rowgap
+Excess \chem{O_2} & Completely burn an alkane to carbon dioxide and water. & \id{03}\\
+\bottomrule\end{tabularx}
+\newpage\normalsize
+\titleblock{PART I\quad /\quad SELECTION TO REACTION}{Catalysts, heat and final steps}{Choose all the selections for one method. Where alternatives are given, choose one complete method. Add the organic partner only in the step where it reacts.}
+\normalsize
+\begin{tabularx}{\linewidth}{@{}L{.27\linewidth} Y@{}}
+\headrow{\textbf{Catalyst selector} & \textbf{When to choose it}}
+Pt / Ni / Pd & Hydrogenate an alkene with \chem{H_2} (\id{04}). Any one of the three metals catalyses the reaction.\rowgap
+\chem{Al_2O_3} & Dehydrate an alcohol with heat (\id{11}). This is an alternative to concentrated sulfuric acid.\rowgap
+Silica / alumina & Crack a longer-chain alkane with strong heat (\id{01}).\rowgap
+None & All other methods, including acid-catalysed methods where the acid is selected in the reagent list.\\
+\bottomrule\end{tabularx}
+\subhead{Heating}
+\begin{tabularx}{\linewidth}{@{}L{.27\linewidth} Y@{}}
+\headrow{\textbf{Heating selector} & \textbf{When to choose it}}
+None & Methane substitution (with UV); alkene additions \id{04}--\id{06}; alcohol substitution \id{10}; reductions \id{16}--\id{18}; acid--base reactions \id{27}--\id{30}.\rowgap
+Heat & Required for dehydration (\id{11}) and amide formation (\id{20}). Also accepted wherever pages 3--5 say \emph{heat or reflux}.\rowgap
+Heat under reflux & Condense vapour back into the flask while heating. Required for primary alcohol \go{} acid (\id{13}). Also accepted for \id{08}, \id{14}, \id{15}, \id{19} and \id{21}--\id{26}.\rowgap
+Heat and distil & For primary alcohol \go{} aldehyde (\id{12}). Remove the aldehyde as it forms to limit further oxidation.\rowgap
+Strong heat & Crack a longer-chain alkane with silica / alumina (\id{01}).\rowgap
+Ignition & Start complete combustion with excess oxygen (\id{03}).\\
+\bottomrule\end{tabularx}
+\subhead{Light, work-up and organic partners}
+\begin{tabularx}{\linewidth}{@{}L{.27\linewidth} Y@{}}
+\headrow{\textbf{Selection} & \textbf{When to choose it}}
+UV light & Initiate methane chlorination or bromination (\id{02}). Alkene halogen addition (\id{05}) uses organic solvent instead.\rowgap
+Then \chem{H^+}(aq) & After alkaline ester or amide hydrolysis, add excess acid to obtain the free acid (\id{23}, \id{26}). For \chem{LiAlH_4} reductions (\id{16}--\id{18}), the combined reagent already includes this final step. Keep the reduction dry until work-up.\rowgap
+Methanol, ethanol or propan-1-ol & Choose one alcohol for esterification (\id{19}). Methanol gives a methyl ester, ethanol an ethyl ester and propan-1-ol a propyl ester.\\
+\bottomrule\end{tabularx}
+\newpage\normalsize
+\titleblock{PART II\quad /\quad REACTION TO SELECTIONS}{Hydrocarbons and haloalkanes}{Find the change you want in the middle column. The last column gives the complete game method. Leave unspecified options at their defaults.}
+\normalsize
+\begin{tabularx}{\linewidth}{@{}l L{.39\linewidth} Y@{}}\methods
+\rx{01} & Longer-chain alkane \go{} smaller alkane + alkene (cracking) & Silica / alumina catalyst + strong heat. Use the supplied product to work out the carbon count of its partner.\rowgap
+\rx{02} & Methane \go{} chloromethane or bromomethane + HX & \chem{Cl_2} or \chem{Br_2}, respectively, + UV light. HX is HCl for chlorination and HBr for bromination.\rowgap
+\rx{03} & Alkane \go{} carbon dioxide + water (complete combustion) & Excess \chem{O_2} + ignition.\rowgap
+\rx{04} & Alkene \go{} alkane (hydrogenation) & \chem{H_2} + Pt / Ni / Pd catalyst.\rowgap
+\rx{05} & Alkene \go{} vicinal dihaloalkane & Select \chem{Cl_2}, \chem{Br_2} or \chem{I_2} in organic solvent. One halogen atom adds to each carbon of the former double bond.\rowgap
+\rx{06} & Alkene \go{} monohaloalkane & HCl, HBr or HI. For an unsymmetrical terminal alkene, H adds to the double-bond carbon already bearing more H atoms.\rowgap
+\rx{08} & Haloalkane \go{} alcohol (substitution) & NaOH(aq) + heat or reflux. Replace the halogen with OH at the same carbon.\rowgap
+\bottomrule\end{tabularx}
+\subhead{Haloalkane hydrolysis}
+Starting with bromoethane, aqueous NaOH and heat give ethanol (\id{08}). The OH group replaces Br on the same carbon. The same substitution method applies to the other supported haloalkanes.
+\subhead{Halogen choice}
+For a standard example of addition across an alkene, use bromine. Bond Lab also accepts iodine in organic solvent; ordinary alkene iodination is generally thermodynamically unfavourable. See the chemistry reference on page 6.
+\newpage\normalsize
+\titleblock{PART II\quad /\quad REACTION TO SELECTIONS}{Alcohols and carbonyl compounds}{Identify the starting functional group and the oxidation level needed at the end. The same oxidising agent can give different products.}
+\normalsize
+\begin{tabularx}{\linewidth}{@{}l L{.39\linewidth} Y@{}}\methods
+\rx{10} & Alcohol \go{} chloro-, bromo- or iodoalkane & For Cl, use HCl or \chem{PCl_3}. For Br, use HBr or \chem{PBr_3}. For I, use HI. The selector groups the alternatives for Cl and Br.\rowgap
+\rx{11} & Alcohol \go{} alkene + water (dehydration) & Concentrated \chem{H_2SO_4} + heat, or \chem{Al_2O_3} catalyst + heat. The game uses terminal alcohols or unsubstituted cycloalkanols with an adjacent C--H.\rowgap
+\rx{12} & Primary alcohol \go{} aldehyde & Acidified \chem{K_2Cr_2O_7}(aq) + heat and distil. Collect the aldehyde as it forms.\rowgap
+\rx{13} & Primary alcohol \go{} carboxylic acid & Acidified \chem{K_2Cr_2O_7}(aq) + heat under reflux. Use sufficient oxidant for full oxidation.\rowgap
+\rx{14} & Secondary alcohol \go{} ketone & Acidified \chem{K_2Cr_2O_7}(aq) + heat or reflux.\rowgap
+\rx{15} & Aldehyde \go{} carboxylic acid & Acidified \chem{K_2Cr_2O_7}(aq) + heat or reflux.\rowgap
+\rx{16} & Aldehyde \go{} primary alcohol & \chem{NaBH_4}(aq), or \chem{LiAlH_4} in dry ether followed by \chem{H^+}(aq).\rowgap
+\rx{17} & Ketone \go{} secondary alcohol & \chem{NaBH_4}(aq), or \chem{LiAlH_4} in dry ether followed by \chem{H^+}(aq).\rowgap
+\rx{18} & Carboxylic acid \go{} primary alcohol & \chem{LiAlH_4} in dry ether followed by \chem{H^+}(aq). Choose the combined reagent.\\
+\bottomrule\end{tabularx}
+\subhead{Choosing the apparatus}
+Ethanol gives ethanal when the aldehyde is distilled out (\id{12}). Keeping the mixture under reflux allows oxidation to continue to ethanoic acid (\id{13}). Starting from ethanal itself, choose \id{15}.
+\subhead{Apply the same methods to rings}
+Cyclohexanol is a secondary alcohol. Oxidation gives cyclohexanone (\id{14}), and reduction of cyclohexanone returns cyclohexanol (\id{17}). Dehydration of cyclohexanol gives cyclohexene and water (\id{11}). The six-carbon ring remains intact.
+\newpage\normalsize
+\titleblock{PART II\quad /\quad REACTION TO SELECTIONS}{Esters and amides}{For hydrolysis, first identify the acid-derived fragment and the alcohol- or nitrogen-derived fragment. The final conditions determine their charges.}
+\normalsize
+\begin{tabularx}{\linewidth}{@{}l L{.43\linewidth} Y@{}}\methods
+\rx{19} & Carboxylic acid + alcohol \go{} ester + water & Methanol, ethanol or propan-1-ol + concentrated \chem{H_2SO_4} + heat or reflux.\rowgap
+\rx{20} & Carboxylic acid + ammonia \go{} unsubstituted amide + water & \chem{NH_3} + heat. First form the ammonium carboxylate, then heat it to form the amide.\rowgap
+\rx{21} & Ester \go{} carboxylic acid + alcohol & Dilute \chem{H^+}(aq) + heat or reflux.\rowgap
+\rx{22} & Ester \go{} carboxylate + alcohol & NaOH(aq) + heat or reflux.\rowgap
+\rx{23} & Ester \go{} carboxylic acid + alcohol, via alkaline hydrolysis & NaOH(aq) + heat or reflux, \textbf{then} \chem{H^+}(aq).\rowgap
+\rx{24} & Amide \go{} carboxylic acid + ammonium species & Dilute \chem{H^+}(aq) + heat or reflux.\rowgap
+\rx{25} & Amide \go{} carboxylate + ammonia or amine & NaOH(aq) + heat or reflux.\rowgap
+\rx{26} & Amide \go{} carboxylic acid + ammonium species, via alkaline hydrolysis & NaOH(aq) + heat or reflux, \textbf{then} excess \chem{H^+}(aq). The acid protonates both fragments.\\
+\bottomrule\end{tabularx}
+\subhead{Worked example: \textit{N}-propylbutanamide}
+Break the bond between the carbonyl carbon and nitrogen. The four-carbon fragment comes from butanoic acid. The three-carbon propyl group stays attached to nitrogen.
+\par\vspace{5pt}
+\begin{tabularx}{\linewidth}{@{}L{.28\linewidth} Y Y@{}}
+\headrow{\textbf{Final conditions} & \textbf{Acid-derived product} & \textbf{Nitrogen product}}
+Acidic (\id{24}, \id{26}) & Butanoic acid\newline \chem{CH_3CH_2CH_2COOH} & Propylammonium\newline \chem{CH_3CH_2CH_2NH_3^{+}}\rowgap
+Alkaline (\id{25}) & Butanoate\newline \chem{CH_3CH_2CH_2COO^{-}} & Propan-1-amine\newline \chem{CH_3CH_2CH_2NH_2}\\
+\bottomrule\end{tabularx}
+\par\vspace{8pt}If one product is shown, draw its partner. For an unsubstituted amide (\chem{RCONH_2}), the nitrogen product is \chem{NH_4^{+}} after acid treatment or \chem{NH_3} under alkaline conditions.
+\newpage\normalsize
+\titleblock{PART II\quad /\quad REACTION TO SELECTIONS}{Acid--base changes and synthesis}{If the skeleton and functional group connectivity stay the same but the charge changes, look for a proton transfer. These four steps require no heating.}
+\normalsize
+\begin{tabularx}{\linewidth}{@{}l L{.44\linewidth} Y@{}}\methods
+\rx{27} & Carboxylic acid \go{} carboxylate ion + water & NaOH(aq). The acid loses the H from its OH group.\rowgap
+\rx{28} & Carboxylate ion \go{} carboxylic acid & Dilute \chem{H^+}(aq) or HCl. Protonate the negatively charged oxygen.\rowgap
+\rx{29} & Amine \go{} alkylammonium ion & Dilute \chem{H^+}(aq) or HCl. Nitrogen gains a proton and a positive charge.\rowgap
+\rx{30} & Alkylammonium ion \go{} amine + water & NaOH(aq). Hydroxide removes a proton from nitrogen.\\
+\bottomrule\end{tabularx}
+\subhead{Worked route: 1-bromobutane to butanoate}
+This challenge requires exactly three steps, the minimum using the supported reactions. All four carbons stay together. First replace Br with OH, oxidise the terminal alcohol fully, then remove the acid proton.
+\par\vspace{6pt}
+\begin{tabularx}{\linewidth}{@{}l L{.44\linewidth} Y@{}}
+\headrow{\textbf{Step} & \textbf{Conversion} & \textbf{One accepted method}}
+1 & 1-Bromobutane \go{} butan-1-ol & NaOH(aq), heat (\id{08}).\rowgap
+2 & Butan-1-ol \go{} butanoic acid & Acidified \chem{K_2Cr_2O_7}(aq), heat under reflux (\id{13}).\rowgap
+3 & Butanoic acid \go{} butanoate ion & NaOH(aq), no heating (\id{27}).\\
+\bottomrule\end{tabularx}
+\subhead{Scope and references}
+Reaction numbers retain their original labels. Entries 07 (alkene hydration) and 09 (haloalkane elimination) have been removed from this guide and the game.
+\par\vspace{7pt}
+Methods and selectable alternatives follow Bond Lab's reaction generator 2026.7. The game uses straight-chain and selected five- and six-membered ring examples. The tables name distinct products and omit spectator ions and balancing coefficients.
+\par\vspace{7pt}
+\href{https://www.edb.gov.hk/attachment/en/curriculum-development/kla/science-edu/ref-and-resources/Supplementory_note_for_Chem_20180818_Eng.pdf}{Hong Kong Education Bureau: Chemistry notes for teachers} (curriculum context).\par\vspace{4pt}
+\href{https://openstax.org/books/organic-chemistry/pages/8-2-halogenation-of-alkenes-addition-of-x2}{OpenStax Organic Chemistry, 8.2: Halogenation of alkenes} (iodine comparison).
+\end{document}

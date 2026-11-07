@@ -1,6 +1,6 @@
 import type { Compound, Reaction } from './types';
 // Bump whenever rules, enumeration, seeded selection or grading semantics change.
-export const VERSION='2026.6';
+export const VERSION='2026.7';
 // Seeded questions changed: old drafts must not be regraded under new rules.
 export const COMPATIBLE_VERSIONS=[VERSION];
 export const CONDITIONS:Record<string,string>={
@@ -12,7 +12,7 @@ export const CONDITIONS:Record<string,string>={
   'dilute-acid':'Dilute H⁺(aq)',ammonia:'NH₃',organic:'Organic solvent',
   'cracking-catalyst':'Silica / alumina catalyst','strong-heat':'Strong heating',
   'alcohol-1':'Methanol','alcohol-2':'Ethanol','alcohol-3':'Propan-1-ol',
-  'ethanolic-oh':'KOH in ethanol',water:'H₂O', oxygen:'Excess O₂',ignite:'Ignition',
+  oxygen:'Excess O₂',ignite:'Ignition',
 };
 export const FAMILIES=[
   {id:'all',label:'All reactions'}, {id:'addition',label:'Addition'}, {id:'substitution',label:'Substitution'},
@@ -35,8 +35,6 @@ export function reactions(start:Compound):Reaction[]{
     for(const h of ['Cl','Br','I'] as const)add('addition:halogen-'+h,{...base,kind:'dihalo',halogen:h},[[h.toLowerCase()+'2','organic']],`The halogen adds across the C=C bond, placing one ${h} on each carbon. Stereochemistry is not assessed in this question.`,'Add one halogen atom to each carbon of the double bond.');
     for(const h of ['Cl','Br','I'] as const)add('addition:hydrogen-halide-'+h,{...base,kind:'haloalkane',halogen:h,position:start.cyclic||start.n===2?0:1},[['h'+h.toLowerCase()]],'Apply Markovnikov’s rule: hydrogen attaches to the double-bond carbon already carrying more hydrogens. Draw the major constitutional product; stereochemistry is not assessed.','Which double-bond carbon already has more hydrogen atoms?');
   }
-  if(start.kind==='alkene')add('addition:hydration',{...base,kind:'alcohol',position:start.cyclic||start.n===2?0:1},[['water','dilute-acid','heat']],'Acid-catalysed hydration adds H and OH across the double bond, giving the Markovnikov alcohol.','Replace C=C with C–C and add OH.');
-  if(start.kind==='haloalkane'&&(start.cyclic||pos===0)&&start.n>=2)add('elimination:haloalkane',{...base,kind:'alkene'},[['ethanolic-oh','heat'],['ethanolic-oh','reflux']],'Hot ethanolic hydroxide eliminates a hydrogen halide to form an alkene.','Remove the halogen and an adjacent hydrogen.','Spectator salts are omitted.');
   if(start.kind==='haloalkane')add('substitution:hydrolysis',{...base,kind:'alcohol',position:pos},[['aq-oh','heat'],['aq-oh','reflux']],'Aqueous hydroxide replaces the halogen with an OH group.','Keep the carbon skeleton and replace the halogen.');
   if(start.kind==='alcohol'){
     for(const h of ['Cl','Br','I'] as const)add('substitution:alcohol-'+h,{...base,kind:'haloalkane',halogen:h,position:pos},[['h'+h.toLowerCase()],...(h==='I'?[]:[['p'+h.toLowerCase()+'3']])],'The hydroxyl group is replaced by a halogen. These are the syllabus-level reagent descriptions.','Replace the OH group without changing the carbon skeleton.');

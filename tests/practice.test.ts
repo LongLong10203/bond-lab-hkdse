@@ -6,7 +6,7 @@ import { molecule } from '../src/chemistry/molecules';
 import { conditionsMatch } from '../src/chemistry/check';
 import { isAlcohol,isOrganicReagent,reagentOptions } from '../src/chemistry/condition-options';
 import { reactions,startingCompounds } from '../src/chemistry/rules';
-import { answerFor,editStep,resizeSteps,missingInput,newSession,restoreSessions } from '../src/lib/practice';
+import { answerFor,editStep,missingInput,newSession,restoreSessions,sessionsSchema } from '../src/lib/practice';
 import { levelFor,rewardFor } from '../src/chemistry/rewards';
 import { arrangedPositions,layoutTick,withPositions,type Positions } from '../src/lib/molecule-layout';
 
@@ -131,13 +131,20 @@ test('old generator drafts are discarded instead of silently reinterpreted',()=>
   const g=synthesis(),draft=newSession({...g.question,id:'old',version:'2026.4'});
   assert.equal(restoreSessions(JSON.stringify({synthesis:draft})).synthesis,undefined);
 });
-test('shorter synthesis drafts keep the target as their last step and survive reload',()=>{
-  const g=synthesis();let draft=newSession({...g.question,id:'shorter'});
-  draft=editStep(draft,0,{molecule:molecule(g.route[0].product),conditions:g.route[0].conditions[0]});
-  const short=resizeSteps(draft,2);assert.equal(short.steps.length,2);assert.deepEqual(short.steps[0],draft.steps[0]);assert.deepEqual(short.steps[1].molecule,g.question.target);
-  const restored=restoreSessions(JSON.stringify({synthesis:short})).synthesis!;assert.equal(restored.steps.length,2);
-  assert.deepEqual(answerFor(restored).steps!.at(-1)!.molecule,g.question.target);
-  const expanded=resizeSteps(short,3);assert.equal(expanded.steps[1].molecule.atoms.length,0);assert.deepEqual(expanded.steps[2].molecule,g.question.target);
+test('synthesis drafts require exactly the stated count across saving and restoration',()=>{
+  const g=synthesis(),draft=newSession({...g.question,id:'exact-count'});
+  assert.equal(draft.steps.length,g.question.stepLimit);
+  assert.equal(restoreSessions(JSON.stringify({synthesis:draft})).synthesis!.steps.length,g.question.stepLimit);
+  for(const count of [0,1,2,4]){
+    const altered={...draft,steps:Array.from({length:count},()=>draft.steps[0])};
+    assert.equal(restoreSessions(JSON.stringify({synthesis:altered})).synthesis,undefined);
+    assert.equal(sessionsSchema.safeParse({synthesis:altered}).success,false);
+    assert.match(missingInput(altered)!.message,/exactly 3/);
+  }
+  const missingCount={...draft,question:{...draft.question,stepLimit:undefined}};
+  assert.equal(restoreSessions(JSON.stringify({synthesis:missingCount})).synthesis,undefined);
+  const oldVersion={...draft,question:{...draft.question,version:'2026.6'}};
+  assert.equal(restoreSessions(JSON.stringify({synthesis:oldVersion})).synthesis,undefined);
 });
 test('flexible layout preserves a regular ring and its outward substituent',()=>{
   for(const n of [5,6]){

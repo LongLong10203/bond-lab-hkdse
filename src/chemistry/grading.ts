@@ -8,7 +8,7 @@ export function grade(seed:number,mode:Mode,family:string,answer:Answer):Grade{
   const {reaction,route,question}=generate(seed,mode,family);
   const context=(c:Compound)=>({alcohol:isAlcohol(molecule(c)),provided:question.coReactants.map(r=>r.id)});
   if(mode==='synthesis'){
-    const steps=answer.steps??[];if(steps.length<1||steps.length>route.length)return {correct:false,message:`Use between 1 and ${route.length} transformations. Each step needs a product and conditions.`};
+    const steps=answer.steps??[];if(steps.length!==route.length)return {correct:false,message:`Use exactly ${route.length} transformations. Each step needs a product and conditions.`};
     let current:Compound=reaction.start;
     for(let i=0;i<steps.length;i++){
       const invalid=validate(steps[i].molecule);if(invalid)return {correct:false,stepIndex:i,message:`Step ${i+1}: ${invalid}`};

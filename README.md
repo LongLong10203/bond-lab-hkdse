@@ -12,17 +12,21 @@ Bond Lab provides three practice modes:
 
 - **Build the product:** draw the product from the starting compound and supplied conditions.
 - **Find the conditions:** choose reagents and conditions for a given transformation.
-- **Plan a synthesis:** solve a challenge with a 2–4-step limit, shorten the route when appropriate, choose conditions and any organic co-reactants for each step, and move freely between steps. The final product is supplied. Routes are checked against the supported reaction graph, including direct acid–base transformations.
+- **Plan a synthesis:** solve a challenge in exactly the stated 2–4 steps, choose conditions and any organic co-reactants for each step, and move freely between steps. The final product is supplied. The required count and worked solution come from a shortest-path search of the supported reaction graph, including direct acid–base transformations. Shorter or longer submissions are rejected.
+
+Alkene hydration and haloalkane elimination with ethanolic hydroxide are excluded from practice. Alcohol dehydration remains available.
 
 Product questions show supplied coproducts without naming the answer’s functional group. Ester and amide hydrolysis can assess either product, including alcohols, amines, and ammonium ions in the appropriate medium. Cracking and combustion likewise ask for one product and display the other.
 
 Cyclic practice covers five- and six-membered carbon rings: alkanes, alkenes, haloalkanes, alcohols and ketones. Use **Cyclic compounds** in the focus selector. The editor's **Add ring** tool inserts a closed 3–8-carbon ring; bonds and substituents remain editable. Polymer questions and the `*` continuation tool have been removed.
 
-Generator `2026.6` refreshes older unfinished questions because their seeds now mean different questions. Account XP, scores, profiles, and tutorial completion are preserved.
+Generator `2026.7` refreshes older unfinished questions because their seeds now mean different questions. Account XP, scores, profiles, and tutorial completion are preserved.
 
 The molecule editor supports dragging, flexible arrangement, animated changes, and reduced-motion preferences. Element symbols and adjacent hydrogen labels share a baseline; only counts are subscripted. Carbon–carbon bonds connect condensed CH, CH₂ and CH₃ groups. Bonds from carbon to any other element (including O, N, F, Cl, Br, I and explicit H) attach to the actual element symbols at both ends; hydrogen labels move out of the way without crossing bond lines. Attached labels and branches shift together so vertical, horizontal and diagonal bonds keep their intended directions. Other elements keep bonds anchored to their element symbol; hydrogens placed above or below them have explicit bonds. Charges sit snugly at the upper-right of the final full-size letter, above any subscript, such as NH₄⁺. Parallel double and triple bonds have equal lengths, and condensed carbon groups are centred for symmetric diagonal connections. Selection circles enclose the whole label, and molecule previews and copied reactants are centered using their full visible labels. Signed-in players earn XP for harder questions, and each level requires more XP than the previous one. Guest practice has no XP or levels. Worked solutions remain available; viewing one removes that question’s account XP reward. Answer controls and the highlighted next-challenge button stay in a fixed bar at the bottom of the screen, including when the page is at the top. Space beneath the content adjusts to the bar height. A five-step spotlight tutorial introduces the controls on first play, with a replay option in Help.
 
 Questions are generated from bounded chemistry rules and checked on the server. This is an independent educational project, not an official HKEAA resource. It covers selected HKDSE organic chemistry topics, not the entire syllabus or every valid reaction. See the [chemistry scope](docs/chemistry-scope.md) for supported transformations and limitations. Teacher review is recommended before classroom assessment; game XP does not represent examination marks.
+
+The [reaction methods guide](output/pdf/Bond-Lab-Reaction-Methods.pdf) provides reagent-to-reaction and reaction-to-condition tables, with [editable LaTeX source](output/pdf/reaction-methods/main.tex).
 
 ## Saved progress and data
 

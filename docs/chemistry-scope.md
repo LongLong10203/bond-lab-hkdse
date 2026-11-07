@@ -2,13 +2,13 @@
 
 Bond Lab uses bounded examples based on compulsory HKDSE organic chemistry. It is not a universal reaction predictor or a curriculum-certified assessment service.
 
-## Current coverage — generator 2026.6
+## Current coverage — generator 2026.7
 
 - Acyclic chains and ester/amide total carbon counts up to eight carbons.
 - Cyclopentane/cyclohexane derivatives: cycloalkenes, halocycloalkanes, cycloalkanols, cycloalkanones and vicinal dihalides. Ring retention is checked structurally. Small-ring reactivity, aromatic compounds, fused rings and stereochemistry are not generated.
-- Hydrogenation; halogen/hydrogen-halide addition; acid-catalysed alkene hydration.
+- Hydrogenation and halogen/hydrogen-halide addition. Alkene hydration is excluded.
 - Methane monosubstitution, haloalkane hydrolysis and alcohol-to-haloalkane substitution.
-- Dehydration of primary alcohols or unsubstituted cycloalkanols; elimination from terminal haloalkanes or halocycloalkanes using hot ethanolic hydroxide. Ambiguous secondary-chain eliminations are excluded.
+- Dehydration of primary alcohols or unsubstituted cycloalkanols. Haloalkane elimination using ethanolic hydroxide is excluded.
 - Primary-alcohol and aldehyde oxidation; secondary/cyclic alcohol oxidation to ketones; carbonyl and carboxylic-acid reduction.
 - Esterification and unsubstituted amide formation from an acid.
 - Acidic/alkaline ester and amide hydrolysis, optionally followed by excess acid work-up.
@@ -24,7 +24,7 @@ Cracking questions supply one possible alkane or alkene and ask for the other, c
 
 ## Synthesis
 
-Challenges have a limit of 2–4 steps. The learner may select fewer steps; every submitted transformation and the final target are still validated. Generated routes reject reversible detours and any shorter route found in the supported graph. In particular, haloalkane → primary alcohol → acid → carboxylate takes three steps; no esterification/hydrolysis detour is required. This is not a claim of a global shortest synthesis across chemistry outside the implemented rules.
+Challenges require exactly 2–4 steps. A breadth-first search finds a shortest supported route to each sampled target, including the fallback target. The actual shortest route determines the stated count, worked solution and XP reward. The interface supplies that fixed number of steps, saved drafts must match it, and the server rejects any submission with fewer or more steps. Every submitted transformation and the final target are validated. In particular, haloalkane → primary alcohol → acid → carboxylate takes three steps; no esterification/hydrolysis detour is required. This is not a claim of a global shortest synthesis across chemistry outside the implemented rules.
 
 Co-reactants are available for the route but must be selected only in the step where they are used. Alternative complete procedures are accepted within the supported selector. Extra irrelevant reagents fail. The final product is supplied, and earlier intermediates remain editable. Older generator seeds are rejected and refreshed; saved XP is independent of question drafts.
 

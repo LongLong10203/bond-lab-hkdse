@@ -1,6 +1,17 @@
 # Verification
 
-## Current release — generator 2026.6
+## Current release — generator 2026.7
+
+- Removed alkene hydration (guide entry 07) and haloalkane elimination (entry 09) from the rules and their unused water/ethanolic-hydroxide reagent choices. The pool now contains 604 assessed reaction variants across 44 rule variants.
+- Independently traversed all 1,378 reachable start/target pairs within four steps from the 63 eligible synthesis starting compounds. Every shortest-path result matches the independently computed distance and consists of valid reactions and conditions.
+- Checked 100 seeded synthesis challenges for shorter alternatives and successfully graded their solutions. The generator computes a shortest route for each selected target and derives the required count, worked solution, co-reactants and reward from that route. The fallback uses the same search.
+- Fixed the interface, saved-draft validation and server grading to require exactly the stated count. Tests cover shorter and longer submissions, invalid saved counts and obsolete drafts.
+- All 66 unit/regression tests, all 20 local HTTP/PostgreSQL integration tests, TypeScript checks and the production build pass. HTTP coverage includes rejection of a shortened synthesis submission.
+- Local browser verification confirmed an exact three-step mission, three fixed tabs, removal of the count selector and unused reagents, a three-step worked solution, navigation and draft restoration after reload.
+- Recompiled and visually reviewed all six pages of the LaTeX guide. It now contains 28 reaction entries, retaining the original numbering with 07 and 09 removed.
+
+
+## Previous release — generator 2026.6
 
 636 enumerated assessed reaction variants, 46 rule variants; 12 reaction families plus the all-reactions selector. Polymer questions are removed; cyclic compounds and acid–base transformations are included.
 

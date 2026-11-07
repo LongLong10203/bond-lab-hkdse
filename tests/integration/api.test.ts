@@ -26,6 +26,12 @@ for(const mode of ['products','conditions','synthesis'] as Mode[])test(`${mode}:
   for(let attempt=0;attempt<2;attempt++){
     const checked=await post('submissions',{id,answer});assert.equal(checked.status,200);assert.equal((await checked.json()).correct,true);
   }
+  if(mode==='synthesis'){
+    const shorter=await post('submissions',{id,answer:{steps:answer.steps!.slice(1)}});
+    assert.equal(shorter.status,200);
+    const result=await shorter.json();assert.equal(result.correct,false);
+    assert.match(result.message,new RegExp(`exactly ${question.stepLimit}`));
+  }
   const wrong=await post('submissions',{id,answer:{}});assert.equal(wrong.status,200);assert.equal((await wrong.json()).correct,false);
   const reveal=await post('submissions',{id,reveal:true});assert.deepEqual(await reveal.json(),solution(row.seed,mode,row.family));
 });
