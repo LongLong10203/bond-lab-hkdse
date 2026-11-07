@@ -49,3 +49,32 @@ test('guest grading returns feedback without XP rewards',async()=>{
   const row=await db.challenge.findUniqueOrThrow({where:{id:question.id}}),g=generate(row.seed,'conditions',row.family);
   const result=await(await accountRequest('submissions',null,'POST',{id:question.id,answer:{conditions:g.reaction.conditions[0]}})).json();assert.equal(result.correct,true);assert.equal('xp' in result,false);assert.equal('progress' in result,false);
 });
+
+test('Sing Yin accounts can save progress and appear in rankings and profiles',async()=>{
+  const a=await account('singyin.edu.hk');
+  assert.equal((await accountRequest('progress',a)).status,200);
+  assert.equal((await accountRequest('leaderboard',a)).status,200);
+  const response=await accountRequest(`leaderboard/${a.id}`,a);
+  assert.equal(response.status,200);
+  assert.equal((await response.json()).email,`test-${a.id}@singyin.edu.hk`);
+  const unverified=await account('singyin.edu.hk',false);
+  assert.equal((await accountRequest('progress',unverified)).status,401);
+});
+
+// Run against a local server with AUTH_ALLOWED_EMAILS set to the same disposable test email.
+test('private exceptions have account access and profile eligibility, while unverified exceptions fail',{
+  skip:!process.env.TEST_ALLOWED_EMAIL,
+},async()=>{
+  const email=process.env.TEST_ALLOWED_EMAIL!;
+  assert(email.endsWith('@example.com'),'Use a disposable example.com fixture');
+  const a=await fixtureAccount('example.com');users.push(a.id);
+  await db.user.update({where:{id:a.id},data:{email}});
+  assert.equal((await accountRequest('progress',a)).status,200);
+  assert.equal((await accountRequest('profile',a,'PATCH',{displayName:'Private test player'})).status,200);
+  const response=await accountRequest(`leaderboard/${a.id}`,a);
+  assert.equal(response.status,200);assert.equal((await response.json()).email,email);
+  assert.equal((await accountRequest('leaderboard',a)).status,200);
+  await db.user.update({where:{id:a.id},data:{emailVerified:false}});
+  assert.equal((await accountRequest('progress',a)).status,401);
+  assert.equal((await accountRequest('leaderboard',a)).status,401);
+});

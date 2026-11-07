@@ -1,5 +1,13 @@
 # Verification
 
+## Account access update — 7 November 2026
+
+- Exact `syss.edu.hk` and `singyin.edu.hk` email domains are accepted with matching Google hosted-domain claims and verified email ownership.
+- Server-only `AUTH_ALLOWED_EMAILS` supports exact private exceptions. Tests cover normalisation, malformed inputs, verification, revocation, and rejection of lookalike addresses and aliases.
+- The same eligibility rules cover account creation, sessions, API access, deletion, leaderboard entries and public profiles. Private values are configured separately from source control.
+- All 67 unit/regression tests and 22 local integration tests pass, including Sing Yin profile eligibility and a disposable private exception. The latter uses `TEST_ALLOWED_EMAIL` with an `example.com` fixture and a local server configured with the matching `AUTH_ALLOWED_EMAILS` value.
+- TypeScript checks and the production build pass. The browser bundle contains no configured private email address.
+
 ## Current release — generator 2026.7
 
 - Removed alkene hydration (guide entry 07) and haloalkane elimination (entry 09) from the rules and their unused water/ethanolic-hydroxide reagent choices. The pool now contains 604 assessed reaction variants across 44 rule variants.

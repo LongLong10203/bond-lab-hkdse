@@ -13,7 +13,7 @@ export default function Account({coverage,googleReady,welcome=false,view='game',
     try{setGuest(sessionStorage.getItem('bond-lab-guest')==='yes');}catch{setGuest(false);}
     const url=new URL(window.location.href);
     if(url.searchParams.has('authError')){
-      setLoginError('Sign-in was not completed. Use your syss.edu.hk school Google account. If access is blocked, ask your school administrator to allow Bond Lab.');
+      setLoginError('Sign-in was not completed. Use your syss.edu.hk or singyin.edu.hk school Google account. If access is blocked, ask your school administrator to allow Bond Lab.');
       url.searchParams.delete('authError');url.searchParams.delete('error');url.searchParams.delete('error_description');
       window.history.replaceState(null,'',url);
     }

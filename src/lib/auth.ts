@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError } from 'better-auth/api';
 import { db } from './db';
-import { allowedGoogleProfile, schoolEmail } from './account-policy';
+import { allowedGoogleProfile, allowedEmail } from './account-policy';
 import { trustedSiteOrigins } from './site-origin';
 
 export const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
@@ -21,7 +21,7 @@ export const auth = betterAuth({
       // Let the player choose a different Google account on every attempt.
       // Check Google's authenticated profile on every login, including returning users.
       mapProfileToUser(profile) {
-        if (!allowedGoogleProfile(profile)) throw new APIError('FORBIDDEN', {message:'Use your verified syss.edu.hk school Google account.'});
+        if (!allowedGoogleProfile(profile)) throw new APIError('FORBIDDEN', {message:'Use a verified Google account approved for Bond Lab.'});
         return {email:profile.email.toLowerCase(), emailVerified:true};
       },
     },
@@ -29,18 +29,18 @@ export const auth = betterAuth({
   account: {accountLinking:{enabled:false}, storeAccountCookie:false},
   session: {expiresIn:60*60*24*7, updateAge:60*60*24, cookieCache:{enabled:false}},
   user: {changeEmail:{enabled:false},deleteUser:{enabled:true,beforeDelete:async(user,request)=>{
-    if(!user.emailVerified||!schoolEmail(user.email))throw new APIError('FORBIDDEN');
+    if(!user.emailVerified||!allowedEmail(user.email))throw new APIError('FORBIDDEN');
     const expected=request?.headers.get('X-Bond-Lab-Account');
     if(expected&&expected!==user.id)throw new APIError('FORBIDDEN');
   }}},
   databaseHooks: {
     user: {create:{before:async user => {
-      if (!schoolEmail(user.email) || !user.emailVerified) throw new APIError('FORBIDDEN', {message:'School Google accounts only.'});
+      if (!allowedEmail(user.email) || !user.emailVerified) throw new APIError('FORBIDDEN', {message:'Use a verified Google account approved for Bond Lab.'});
       return {data:user};
     }}},
     session: {create:{before:async session => {
       const user = await db.user.findUnique({where:{id:session.userId}});
-      if (!user?.emailVerified || !schoolEmail(user.email)) throw new APIError('FORBIDDEN', {message:'School Google accounts only.'});
+      if (!user?.emailVerified || !allowedEmail(user.email)) throw new APIError('FORBIDDEN', {message:'Use a verified Google account approved for Bond Lab.'});
       return {data:session};
     }}},
   },
@@ -49,7 +49,7 @@ export const auth = betterAuth({
 export async function accountSession(request: Request) {
   const session = await auth.api.getSession({headers:request.headers});
   if(request.headers.has('X-Bond-Lab-Account') && request.headers.get('X-Bond-Lab-Account')!==session?.user.id)return null;
-  return session?.user.emailVerified && schoolEmail(session.user.email) ? session : null;
+  return session?.user.emailVerified && allowedEmail(session.user.email) ? session : null;
 }
 export function sameOrigin(request: Request) {
   const origin = request.headers.get('origin');
