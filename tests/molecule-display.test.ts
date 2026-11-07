@@ -2,7 +2,44 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { atomLabelLayout,bondSegments,moleculeDisplayBounds,moleculeViewBox } from '../src/lib/molecule-display';
 import type { Atom,Molecule } from '../src/chemistry/types';
+import { molecule } from '../src/chemistry/molecules';
+import { reactions,startingCompounds } from '../src/chemistry/rules';
 function pair(dx:number,dy:number,element:Atom['element']='O',order:1|2|3=1):Molecule{return {atoms:[{id:'a',element,x:100,y:100},{id:'b',element:'C',x:100+dx,y:100+dy}],bonds:[{a:'a',b:'b',order}],autoH:true};}
+test('water reads H2O in every generated product and coproduct, with centered previews',()=>{
+ const waters=startingCompounds().flatMap(reactions).flatMap(r=>[r.product,...r.coProducts??[]]).filter(c=>c.kind==='water');
+ assert(waters.length>0);
+ for(const compound of waters){
+  const m=molecule(compound),layout=atomLabelLayout(m.atoms[0],m);
+  assert.equal([...layout.parts].sort((a,b)=>a.x-b.x).map(p=>p.text).join(''),'H2O');
+  const h=layout.parts.find(p=>p.kind==='hydrogen')!,o=layout.parts.find(p=>p.kind==='element')!,count=layout.parts.find(p=>p.kind==='subscript')!;
+  assert.equal(h.y,o.y);assert(count.y>h.y);
+  assert(h.x+h.width/2<=count.x-count.width/2);
+  assert(count.x+count.width/2<o.x-o.width/2);
+  const box=moleculeViewBox(m),bounds=moleculeDisplayBounds(m);
+  assert.equal(box.x+box.width/2,(bounds.left+bounds.right)/2);
+ }
+});
+test('water ordering handles disconnected editor water and keeps explicit O-H bonds intact',()=>{
+ const m=molecule({kind:'alkane',n:1});
+ m.atoms.push({id:'water',element:'O',x:200,y:100});
+ assert.equal(atomLabelLayout(m.atoms[1],m).direction.x,-1);
+ const explicit:Molecule={atoms:[{id:'o',element:'O',x:100,y:100},{id:'h1',element:'H',x:20,y:100},{id:'h2',element:'H',x:180,y:100}],bonds:[{a:'o',b:'h1',order:1},{a:'o',b:'h2',order:1}],autoH:false};
+ assert.equal(atomLabelLayout(explicit.atoms[0],explicit).parts.length,1);
+ for(const bond of explicit.bonds)assert.equal(bondSegments(explicit,bond).length,1);
+});
+test('standalone hydrogen halides put H first while bonded halogens retain their element labels',()=>{
+ for(const element of ['F','Cl','Br','I'] as const){
+  const m:Molecule={atoms:[{id:'a',element,x:100,y:100}],bonds:[],autoH:true};
+  const parts=atomLabelLayout(m.atoms[0],m).parts;
+  assert.equal([...parts].sort((a,b)=>a.x-b.x).map(p=>p.text).join(''),'H'+element);
+  assert.equal(parts[0].y,parts[1].y);
+  const attached=pair(100,0,element);
+  assert.deepEqual(atomLabelLayout(attached.atoms[0],attached).parts.map(p=>p.text),[element]);
+  assert.equal(bondSegments(attached,attached.bonds[0]).length,1);
+  const noAutoH={...m,autoH:false};
+  assert.deepEqual(atomLabelLayout(noAutoH.atoms[0],noAutoH).parts.map(p=>p.text),[element]);
+ }
+});
 test('horizontal element and H glyphs share size and baseline; only counts are lowered',()=>{
  const m=pair(100,0,'C'),parts=atomLabelLayout(m.atoms[0],m).parts;
  const c=parts.find(p=>p.kind==='element')!,h=parts.find(p=>p.kind==='hydrogen')!,n=parts.find(p=>p.kind==='subscript')!;

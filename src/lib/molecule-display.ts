@@ -13,8 +13,12 @@ function rawAtomLabelLayout(atom:Atom,molecule:Molecule){
   // Carbon–carbon bonds use the condensed group. Keep H clear of any
   // carbon–noncarbon bond, which must attach to the C glyph itself.
   const score=(d:{x:number;y:number})=>vectors.reduce((n,v)=>n+Math.pow(Math.max(0,d.x*v.x+d.y*v.y),4),0);
-  const direction=directions.reduce((best,d)=>score(d)<score(best)-0.001?d:best,directions[0]);
   const w=widths[atom.element],h=hydrogens(molecule,atom);
+  // Conventional standalone formulas put H first in water and hydrogen halides.
+  const hydrogenFirst=neighbours.length===0&&!atom.charge&&(
+    (atom.element==='O'&&h===2)||(['F','Cl','Br','I'].includes(atom.element)&&h===1)
+  );
+  const direction=hydrogenFirst?directions[1]:directions.reduce((best,d)=>score(d)<score(best)-0.001?d:best,directions[0]);
   const parts:Part[]=[{text:atom.element,x:0,y:8,size:22,width:w,kind:'element'}];
   const hydrogenBonds:Segment[]=[];
   if(h){
