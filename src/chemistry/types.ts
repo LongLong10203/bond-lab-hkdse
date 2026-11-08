@@ -9,4 +9,5 @@ export type Reaction = { ruleId: string; start: Compound; product: Compound; con
 export type CoReactant = {id:string;label:string;molecule:Molecule};
 export type ChallengeData = { id: string; mode: Mode; family: string; version: string; title: string; start: Molecule; startName: string; extras: string; conditions?: string[]; target?: Molecule; targetName?: string; stepLimit?: number; instruction: string; coReactants: CoReactant[]; coProducts: CoReactant[]; reward:number; difficulty: 'Foundation'|'Intermediate'|'Advanced' };
 export type Answer = { molecule?: Molecule; conditions?: string[]; steps?: { molecule: Molecule; conditions: string[] }[] };
-export type Grade = { correct: boolean; message: string; stepIndex?:number; xp?:number; explanation?: string; expected?: Molecule; expectedConditions?: string[]; route?: { name: string; molecule: Molecule; conditions: string[] }[] };
+export type ReviewTopic = { id: string; title: string };
+export type Grade = { correct: boolean; message: string; reviewTopics?: ReviewTopic[]; stepIndex?:number; xp?:number; explanation?: string; expected?: Molecule; expectedConditions?: string[]; route?: { name: string; molecule: Molecule; conditions: string[]; reviewTopic?: ReviewTopic }[] };

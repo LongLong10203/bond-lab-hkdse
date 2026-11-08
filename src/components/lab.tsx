@@ -1,12 +1,12 @@
 'use client';
-import { useEffect,useRef,useState } from 'react';
+import { useEffect,useRef,useState, type MouseEvent } from 'react';
 import { ArrowRight,Atom,BookOpen,Check,ChevronLeft,FlaskConical,GitBranch,HelpCircle,LoaderCircle,Menu,Settings2,Sparkles,Trophy,X,AlertCircle } from 'lucide-react';
-import type { ChallengeData,Grade,Mode,Molecule } from '@/chemistry/types';
+import type { ChallengeData,Grade,Mode,Molecule,ReviewTopic } from '@/chemistry/types';
 import { FAMILIES } from '@/chemistry/rules';
 import { displayConditions,isOrganicReagent } from '@/chemistry/condition-options';
 import { coReactant } from '@/chemistry/context';
 import { levelFor } from '@/chemistry/rewards';
-import { answerFor,editStep,missingInput,newSession,type PracticeSession } from '@/lib/practice';
+import { answerFor,editStep,missingInput,newSession,withGrade,type PracticeSession } from '@/lib/practice';
 import { type Progress } from '@/lib/progress';
 import { authClient } from '@/lib/auth-client';
 import { useSavedPractice } from './use-saved-practice';
@@ -17,14 +17,28 @@ import Editor from './editor';
 import MoleculeView from './molecule';
 import ConditionPicker from './conditions';
 const MODES=[{id:'products' as const,name:'Build the product',icon:FlaskConical},{id:'conditions' as const,name:'Find the conditions',icon:Settings2},{id:'synthesis' as const,name:'Plan a synthesis',icon:GitBranch}];
-export default function Lab({coverage,player}:{coverage:{variants:number;rules:number};player:Player|null}){
+export default function Lab({player}:{coverage:{variants:number;rules:number};player:Player|null}){
   const {mode,setMode,family,setFamily,sessions,setSessions,progress,setProgress,ready,storageWarning,saveStatus,saveError,flush,tutorialCompleted,completeTutorial}=useSavedPractice(player?.id);
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[generation,setGeneration]=useState(0);
   const [error,setError]=useState(''),[inputMessage,setInputMessage]=useState(''),[accountBusy,setAccountBusy]=useState(false);
-  const [dialog,setDialog]=useState<'library'|'progress'|'help'|null>(null),[mobileNav,setMobileNav]=useState(false),[levelUp,setLevelUp]=useState<number|null>(null);
+  const [dialog,setDialog]=useState<'progress'|'help'|null>(null),[mobileNav,setMobileNav]=useState(false),[levelUp,setLevelUp]=useState<number|null>(null);
   const [replayTour,setReplayTour]=useState(false);
   const closeRef=useRef<HTMLButtonElement>(null),requestId=useRef(0),submitLock=useRef(false);
   const session=sessions[mode],question=session?.question,active=MODES.find(m=>m.id===mode)!,level=levelFor(progress.xp);
+  const [solutionError,setSolutionError]=useState(''),[restoreAttempt,setRestoreAttempt]=useState(0);
+  const needsSolution=!!session?.revealed&&!session.solution;
+  useEffect(()=>{
+    if(!needsSolution||!question)return;
+    const controller=new AbortController(),id=question.id;
+    setSolutionError('');
+    // Older drafts saved only the revealed flag. Recover their solution once.
+    fetch('/api/submissions',{method:'POST',headers:{'Content-Type':'application/json',...(player?{'X-Bond-Lab-Account':player.id}:{})},body:JSON.stringify({id,reveal:true,requestId:crypto.randomUUID()}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])})
+      .then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error);if(controller.signal.aborted)return;setSessions(previous=>{const current=previous[mode];return current?.question.id===id?{...previous,[mode]:{...withGrade(current,data,true),feedback:current.feedback}}:previous;});})
+      .catch(e=>{if(!controller.signal.aborted)setSolutionError(e instanceof Error?e.message:'Could not restore the worked solution.');});
+    return()=>controller.abort();
+    // Editing a draft must not restart recovery of its already-revealed solution.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[needsSolution,question?.id,mode,player?.id,restoreAttempt,setSessions]);
   const showTour=ready&&!loading&&!!session&&!dialog&&(!tutorialCompleted||replayTour);
   const finishTour=async()=>{const saved=await completeTutorial();if(saved)setReplayTour(false);return saved;};
   useEffect(() => {
@@ -71,7 +85,7 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
       if(player&&data.progress)setProgress(data.progress);
       else if(!reveal)setProgress(p=>{const nextXP=p.xp+award;return {...p,attempts:p.attempts+1,correct:p.correct+(data.correct?1:0),completed:p.completed+(firstGuestSolve?1:0),xp:nextXP,byMode:{...p.byMode,[mode]:p.byMode[mode]+(firstGuestSolve?1:0)}};});
       if(award&&levelFor(progress.xp+award).level>level.level)setLevelUp(levelFor(progress.xp+award).level);
-      update(s=>({...s,revealed:data.revealed??(s.revealed||reveal),awarded:data.awarded??(s.awarded||firstGuestSolve),feedback:{...data,xp:award},activeStep:data.stepIndex??s.activeStep}));
+      update(s=>({...withGrade(s,{...data,xp:award},reveal),revealed:data.revealed??(s.revealed||reveal),awarded:data.awarded??(s.awarded||firstGuestSolve)}));
     }catch(e){setError(e instanceof Error?e.message:'Could not check your answer. Please try again.');}finally{setBusy(false);submitLock.current=false;}
   };
   const signIn=()=>window.location.assign('/login');
@@ -83,17 +97,24 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
   const openCommunity=async(path:string)=>{
     setAccountBusy(true);if(!(await flush())){setAccountBusy(false);setError('Save your draft before leaving the game.');return;}window.location.assign(path);
   };
+  const openReview = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (!busy && !accountBusy) void openCommunity(event.currentTarget.pathname);
+  };
+  const reviewLink = (topic: ReviewTopic, label = 'Review this reaction') => <a key={topic.id} className="reaction-review-link" href={`/library/${topic.id}`} onClick={openReview} aria-disabled={busy||accountBusy}><BookOpen size={15} aria-hidden="true"/>{label}<ArrowRight size={14} aria-hidden="true"/></a>;
   const step=session?.activeStep??0,isFinal=mode==='synthesis'&&step===(session?.steps.length??0)-1;
   const drawing=mode==='synthesis'?session?.steps[step]?.molecule:session?.drawing;
   const conditions=mode==='synthesis'?session?.steps[step]?.conditions??[]:session?.conditions??[];
   const currentStart=mode==='synthesis'&&step>0?session?.steps[step-1]?.molecule:question?.start;
   const feedback=session?.feedback;
+  const workedSolution=session?.solution;
   return <div className="app-shell compact-lab">
     <aside inert={!!dialog||showTour} className={'sidebar '+(mobileNav?'nav-open':'')}>
       <a href="/" className="brand" aria-label="Bond Lab home"><span className="brand-mark"><Atom size={27}/></span><span>BOND<span className="brand-light">LAB</span></span></a>
       <nav aria-label="Game modes">{MODES.map(m=><button disabled={busy} key={m.id} className={'nav-item '+(mode===m.id?'active':'')} aria-current={mode===m.id?'page':undefined} onClick={()=>chooseMode(m.id)}><m.icon size={19}/><span>{m.name}</span></button>)}</nav>
       <div className="nav-divider"/>
-      <button className="nav-item" onClick={()=>{setDialog('library');setMobileNav(false);}}><BookOpen size={18}/>Reaction library</button>
+      <button className="nav-item" disabled={busy||accountBusy} onClick={()=>void openCommunity('/library')}><BookOpen size={18}/>Reaction library</button>
       <button className="nav-item" onClick={()=>{setDialog('progress');setMobileNav(false);}}><Trophy size={18}/>Your progress</button>
       {player&&<button className="nav-item" disabled={busy||accountBusy} onClick={()=>void openCommunity('/leaderboard')}><Trophy size={18}/>Leaderboard</button>}
       <button className="help-nav" onClick={()=>setDialog('help')}><HelpCircle size={17}/>Help</button>
@@ -124,9 +145,15 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
             </section>
           </div>
           {session.revealed&&<p className="practice-note">Solution viewed. You can edit and check your answer.{player&&' This challenge no longer earns XP.'}</p>}
-          {feedback&&<section className={'feedback '+(feedback.correct?'correct':session.revealed?'solution':'retry')} aria-live="polite"><div className="feedback-title"><div><strong>{feedback.message}</strong>{feedback.explanation&&<p>{feedback.explanation}</p>}</div>{player&&!!feedback.xp&&<span className="xp-reward">+{feedback.xp} XP</span>}{feedback.stepIndex!==undefined&&<button className="secondary-button" onClick={()=>changeStep(feedback.stepIndex!)}>Edit step {feedback.stepIndex+1}</button>}</div>
-            {session.revealed&&feedback.expected&&mode!=='synthesis'&&<div className="solution-row"><MoleculeView molecule={feedback.expected} label="Worked solution"/><div className="condition-tags">{displayConditions(feedback.expectedConditions??[],question.start).map(c=><span key={c}>{c}</span>)}</div></div>}
-            {feedback.route&&<div className="solution-route">{feedback.route.map((s,i)=><div key={i}><span className="micro-label">STEP {i+1}</span><MoleculeView molecule={s.molecule} label={s.name}/><strong>{s.name}</strong><p>{[...s.conditions.filter(isOrganicReagent).map(id=>coReactant(id).label),...displayConditions(s.conditions,i===0?question.start:feedback.route![i-1].molecule)].join(' · ')}</p></div>)}</div>}
+          {feedback&&<section className={'feedback '+(feedback.correct?'correct':'retry')} aria-label="Answer feedback" aria-live="polite"><div className="feedback-title"><div><strong>{feedback.message}</strong>{feedback.explanation&&<p>{feedback.explanation}</p>}</div>{player&&!!feedback.xp&&<span className="xp-reward">+{feedback.xp} XP</span>}{feedback.stepIndex!==undefined&&<button className="secondary-button" onClick={()=>changeStep(feedback.stepIndex!)}>Edit step {feedback.stepIndex+1}</button>}</div>
+            {!feedback.correct&&feedback.reviewTopics&&<div className="reaction-review-links">{feedback.reviewTopics.map(topic=>reviewLink(topic,feedback.reviewTopics!.length>1?topic.title:'Review this reaction'))}</div>}
+          </section>}
+          {session.revealed&&<section className="feedback solution" aria-label="Worked solution" aria-live="polite">
+            <div className="feedback-title"><div><strong>Worked solution</strong>{workedSolution?.explanation&&<p>{workedSolution.explanation}</p>}</div></div>
+            {needsSolution&&(solutionError?<p role="alert">{solutionError} <button className="text-button" onClick={()=>setRestoreAttempt(value=>value+1)}>Retry loading solution</button></p>:<p role="status">Restoring your worked solution…</p>)}
+            {workedSolution?.reviewTopics&&<div className="reaction-review-links">{workedSolution.reviewTopics.map(topic=>reviewLink(topic))}</div>}
+            {workedSolution?.expected&&mode!=='synthesis'&&<div className="solution-row"><MoleculeView molecule={workedSolution.expected} label="Worked solution"/><div className="condition-tags">{displayConditions(workedSolution.expectedConditions??[],question.start).map(c=><span key={c}>{c}</span>)}</div></div>}
+            {workedSolution?.route&&<div className="solution-route">{workedSolution.route.map((s,i)=><div key={i}><span className="micro-label">STEP {i+1}</span><MoleculeView molecule={s.molecule} label={s.name}/><strong>{s.name}</strong><p>{[...s.conditions.filter(isOrganicReagent).map(id=>coReactant(id).label),...displayConditions(s.conditions,i===0?question.start:workedSolution.route![i-1].molecule)].join(' · ')}</p>{s.reviewTopic&&reviewLink(s.reviewTopic)}</div>)}</div>}
           </section>}
           {player&&levelUp&&<div className="level-up" role="status"><Trophy size={20}/>Level {levelUp} reached!</div>}
           {storageWarning&&<p className="save-note">Progress cannot be saved in this browser.</p>}
@@ -157,8 +184,8 @@ export default function Lab({coverage,player}:{coverage:{variants:number;rules:n
       </div>
     </main>
     {showTour&&<Tutorial mode={mode} signedIn={!!player} onFinish={finishTour}/>}
-    {dialog&&<div className="dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setDialog(null);}}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button ref={closeRef} className="close-dialog" aria-label="Close dialog" onClick={()=>setDialog(null)}><X size={22}/></button><h2 id="dialog-title">{dialog==='library'?'Reaction library':dialog==='progress'?'Your progress':'How to play'}</h2>
-      {dialog==='help'?<><button className="secondary-button" onClick={()=>{setDialog(null);setReplayTour(true);}}>Replay tutorial</button><p>Choose an atom and click the workspace, or drag it from the toolbar. Drag any atom to move it. Connected chains settle into a zigzag; loose atoms stay where you place them. Choose a bond and select its two atoms. Use the ring size selector and Add ring to insert a closed carbon ring, or connect two existing atoms to close a ring.</p><p>Use the eraser for atoms and bonds. Auto H fills unused valences. Undo/redo also support Ctrl/⌘ Z and Shift Z. With Move selected, arrow keys move the selected atom. Turn off Flexible layout if you prefer a stationary drawing.</p><p>Solve each synthesis in exactly the stated number of steps. This is the shortest route using the supported reactions. Each synthesis step keeps its own drawing and conditions. Click any step to edit it. The final product is supplied. Drafts survive mode changes and reloads. Sign in with your school Google account to save them with your account.</p><p>For synthesis, tick “Use in step” beside a co-reactant only in the step where you use it. Each step saves its own choice. In single-reaction modes, co-reactants shown on the left are already provided. Select additional reagents, a catalyst and heating as needed. “Then H⁺(aq)” means a separate final acid work-up.</p><p>A solution can be viewed without locking your drawing.{player&&' That challenge will no longer award XP.'}</p></>:dialog==='progress'?<><div className="progress-grid">{player&&<><div><strong>{level.level}</strong><span>Level</span></div><div><strong>{progress.xp}</strong><span>Total XP</span></div></>}<div><strong>{progress.completed}</strong><span>Solved</span></div></div>{player&&<p>{level.toNext} XP to level {level.level+1}. Level costs rise: 100, 150, 200, 250 XP, and so on.</p>}{MODES.map(m=><div className="progress-row" key={m.id}><m.icon size={18}/><span>{m.name}</span><strong>{progress.byMode[m.id]}</strong></div>)}{player?<p className="small-note">Single reactions award 20, 35 or 50 XP. Synthesis routes award 50, 80 or 110 XP for 2, 3 or 4 steps. Each challenge earns XP once. These are practice scores, not HKDSE marks.</p>:<p className="small-note">Guest practice has no XP or levels. Sign in to save progress to your account and join the leaderboard.</p>}</>:<><p>{coverage.variants} bounded reaction variants from {coverage.rules} rules.</p><div className="library-list">{[['Addition','Hydrogenation; halogen and hydrogen halide addition.'],['Substitution','Methane monosubstitution, haloalkane hydrolysis and alcohol to haloalkane.'],['Oxidation & reduction','Primary/secondary alcohols, aldehydes, ketones and carboxylic acids.'],['Elimination','Primary-alcohol dehydration to terminal alkenes.'],['Esterification & amides','Formation and acid/alkaline hydrolysis; distinguish acids and carboxylates.'],['Cyclic compounds & other reactions','Five- and six-membered carbon rings, acid–base reactions, cracking and complete combustion.']].map(([title,description])=><div key={title}><h3>{title}</h3><p>{description}</p></div>)}</div><div className="scope-note"><strong>Scope</strong><p>Straight-chain molecules up to eight carbons, plus five- and six-membered carbon rings. Polymer questions are not included. Stereochemistry, mechanisms and unrestricted multifunctional molecules are not assessed. Alternative procedures are accepted within the supported rules. Content still needs teacher review.</p><a href="https://www.edb.gov.hk/attachment/en/curriculum-development/kla/science-edu/ref-and-resources/Supplementory_note_for_Chem_20180818_Eng.pdf" target="_blank" rel="noreferrer">EDB curriculum notes</a></div></>}
+    {dialog&&<div className="dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setDialog(null);}}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button ref={closeRef} className="close-dialog" aria-label="Close dialog" onClick={()=>setDialog(null)}><X size={22}/></button><h2 id="dialog-title">{dialog==='progress'?'Your progress':'How to play'}</h2>
+      {dialog==='help'?<><button className="secondary-button" onClick={()=>{setDialog(null);setReplayTour(true);}}>Replay tutorial</button><p>Choose an atom and click the workspace, or drag it from the toolbar. Drag any atom to move it. Connected chains settle into a zigzag; loose atoms stay where you place them. Choose a bond and select its two atoms. Use the ring size selector and Add ring to insert a closed carbon ring, or connect two existing atoms to close a ring.</p><p>Use the eraser for atoms and bonds. Auto H fills unused valences. Undo/redo also support Ctrl/⌘ Z and Shift Z. With Move selected, arrow keys move the selected atom. Turn off Flexible layout if you prefer a stationary drawing.</p><p>Solve each synthesis in exactly the stated number of steps. This is the shortest route using the supported reactions. Each synthesis step keeps its own drawing and conditions. Click any step to edit it. The final product is supplied. Drafts survive mode changes and reloads. Sign in with your school Google account to save them with your account.</p><p>For synthesis, tick “Use in step” beside a co-reactant only in the step where you use it. Each step saves its own choice. In single-reaction modes, co-reactants shown on the left are already provided. Select additional reagents, a catalyst and heating as needed. “Then H⁺(aq)” means a separate final acid work-up.</p><p>Open Reaction library for visual examples and option tables. After a mistake or worked solution, use Review this reaction to jump to the relevant example. A solution can be viewed without locking your drawing.{player&&' That challenge will no longer award XP.'}</p></>:<><div className="progress-grid">{player&&<><div><strong>{level.level}</strong><span>Level</span></div><div><strong>{progress.xp}</strong><span>Total XP</span></div></>}<div><strong>{progress.completed}</strong><span>Solved</span></div></div>{player&&<p>{level.toNext} XP to level {level.level+1}. Level costs rise: 100, 150, 200, 250 XP, and so on.</p>}{MODES.map(m=><div className="progress-row" key={m.id}><m.icon size={18}/><span>{m.name}</span><strong>{progress.byMode[m.id]}</strong></div>)}{player?<p className="small-note">Single reactions award 20, 35 or 50 XP. Synthesis routes award 50, 80 or 110 XP for 2, 3 or 4 steps. Each challenge earns XP once. These are practice scores, not HKDSE marks.</p>:<p className="small-note">Guest practice has no XP or levels. Sign in to save progress to your account and join the leaderboard.</p>}</>}
     </section></div>}
   </div>;
 }

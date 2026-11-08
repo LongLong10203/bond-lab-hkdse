@@ -1,16 +1,48 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generate } from '../src/chemistry/generate';
-import { grade } from '../src/chemistry/grading';
+import { grade,solution } from '../src/chemistry/grading';
 import { molecule } from '../src/chemistry/molecules';
 import { conditionsMatch } from '../src/chemistry/check';
 import { isAlcohol,isOrganicReagent,reagentOptions } from '../src/chemistry/condition-options';
 import { reactions,startingCompounds } from '../src/chemistry/rules';
-import { answerFor,editStep,missingInput,newSession,restoreSessions,sessionsSchema } from '../src/lib/practice';
+import { answerFor,editStep,missingInput,newSession,restoreSessions,sessionsSchema,withGrade } from '../src/lib/practice';
 import { levelFor,rewardFor } from '../src/chemistry/rewards';
 import { arrangedPositions,layoutTick,withPositions,type Positions } from '../src/lib/molecule-layout';
 
 function synthesis(){for(let seed=0;seed<100;seed++){const g=generate(seed,'synthesis');if(g.route.length===3)return {seed,...g};}throw Error('No 3-step route');}
+test('revealed solutions survive navigation, edits and later checks in all three modes',()=>{
+  for(const mode of ['products','conditions','synthesis'] as const){
+    const g=generate(134,mode,'all'),fresh=newSession({...g.question,id:'persistent-solution'});
+    let draft=withGrade(fresh,solution(134,mode,'all'),true);
+    draft=restoreSessions(JSON.stringify({[mode]:draft}))[mode]!;
+    assert.deepEqual(draft.solution,solution(134,mode,'all'));
+    assert.equal(draft.feedback,null);
+    draft=mode==='synthesis'?editStep(draft,0,{conditions:['h2']}):{...draft,drawing:molecule({kind:'alkane',n:1}),conditions:['h2'],feedback:null};
+    for(const correct of [false,true]){
+      draft=withGrade(draft,{correct,message:correct?'Correct':'Try again',reviewTopics:[{id:'addition-hydrogen',title:'Alkene → alkane'}],xp:correct?20:undefined});
+      const saved=sessionsSchema.parse({[mode]:draft});
+      draft=restoreSessions(JSON.stringify(saved))[mode]!;
+      assert.deepEqual(draft.solution,solution(134,mode,'all'));
+      assert.equal(draft.feedback?.correct,correct);
+      assert.equal(draft.feedback?.reviewTopics?.[0].id,'addition-hydrogen');
+      assert.equal(draft.feedback?.xp,undefined,'Do not replay a saved XP award badge');
+    }
+    assert.equal(fresh.solution,null,'New challenges do not inherit previous solutions');
+  }
+});
+test('legacy or damaged solution caches preserve drafts and allow solution recovery',()=>{
+  const g=synthesis(),fresh=newSession({...g.question,id:'legacy-solution'}),worked=solution(g.seed,'synthesis','all');
+  const legacy={...fresh,revealed:true,solution:undefined,feedback:worked};
+  assert.deepEqual(restoreSessions(JSON.stringify({synthesis:legacy})).synthesis!.solution,worked);
+  for(const cached of [undefined,{correct:false,message:'Missing drawing'}, {expected:{atoms:'bad'}}]){
+    const restored=restoreSessions(JSON.stringify({synthesis:{...fresh,revealed:true,solution:cached}})).synthesis!;
+    assert.equal(restored.revealed,true);
+    assert.equal(restored.solution,null);
+    assert.deepEqual(restored.steps,fresh.steps);
+  }
+  assert.equal(restoreSessions(JSON.stringify({synthesis:{...fresh,solution:worked}})).synthesis!.solution,null);
+});
 test('editing an earlier synthesis step preserves later drawings and conditions across reload',()=>{
   const g=synthesis();let session=newSession({...g.question,id:'draft-test'});
   g.route.forEach((r,index)=>{session=editStep(session,index,{molecule:molecule(r.product),conditions:r.conditions[0]});});

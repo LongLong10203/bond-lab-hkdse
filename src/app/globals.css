@@ -105,3 +105,23 @@
   .answer-toolbar:has(.route-actions) .next-button { grid-column: 1 / -1; }
   .answer-toolbar .previous-step + .next-button { grid-column: 2; }
 }
+
+.reaction-review-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.reaction-review-link { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 9px 13px; border: 1px solid #a9bd96; border-radius: 7px; background: #f5f8ef; color: #3b5736; text-decoration: none; font-size: 12px; font-weight: 600; }
+.reaction-review-link:hover { background: #e9f0df; }
+.reaction-review-link[aria-disabled=true] { opacity: .5; cursor: wait; }
+.solution-route .reaction-review-link { margin-top: 10px; }
+
+/* Reserve space for a consistent inset arrow on every single-choice dropdown. */
+select:not([multiple]):not([size]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' fill='none' stroke='%2366735a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
+@media (forced-colors: active) {
+  select:not([multiple]):not([size]) { appearance: auto; -webkit-appearance: auto; background-image: none; }
+}

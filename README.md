@@ -28,6 +28,12 @@ Questions are generated from bounded chemistry rules and checked on the server. 
 
 The [reaction methods guide](output/pdf/Bond-Lab-Reaction-Methods.pdf) provides reagent-to-reaction and reaction-to-condition tables, with [editable LaTeX source](output/pdf/reaction-methods/main.tex).
 
+**Reaction library** opens a visual reference at `/library`, available to guests and signed-in players. Its 37 topics include nine cyclic reactions, searchable diagrams, example variants, all supplied products, and tables using the game's exact reagent, catalyst, heating and extra-option labels. Each table row is a complete accepted method; alternatives within a cell are joined by “or”. The entries are built from the same reaction rules used for practice. A downloadable [visual PDF guide](public/guides/bond-lab-reactions.pdf) is also available from the library.
+
+Incorrect answers and worked solutions include **Review this reaction** links to the relevant entry; synthesis solutions include a link for each step. These links appear after feedback, not in the initial question. Opening the library from practice saves the current draft first, and **Back to practice** returns to it. Revealed solutions stay open across navigation, reloads, mode changes, edits and subsequent checks in all three modes. Answer feedback also survives navigation until the answer is edited. Older drafts that only stored the “solution viewed” flag recover their solution automatically. Starting a new challenge clears its predecessor's solution.
+
+The visual PDF carries **© 2026 Long (LongLong10203)** on every page and uses this repository's MIT license. After replacing the PDF, run `python3 scripts/stamp-guide-copyright.py` (requires `pypdf` and `reportlab`) to apply the notice and synchronize the downloadable copy.
+
 ## Saved progress and data
 
 Every new visit starts at a sign-in/register page with Google and guest choices. Guests keep unfinished answers and solved counts in their current browser, without XP or levels. Signed-in players save XP, solved counts, drawings, conditions, and their active game mode to their account. Synthesis drafts retain every step. Returning on another browser restores the account’s saved progress. Guest progress stays separate and is not automatically imported into an account.

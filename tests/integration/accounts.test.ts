@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { fixtureAccount,accountRequest,base } from '../helpers/accounts';
 import { db } from '../../src/lib/db';
 import { generate } from '../../src/chemistry/generate';
-import { newSession } from '../../src/lib/practice';
+import { newSession,withGrade } from '../../src/lib/practice';
 const users:string[]=[],questions:string[]=[];
 async function account(domain?:string,verified?:boolean){const a=await fixtureAccount(domain,verified);users.push(a.id);return a;}
 after(async()=>{await db.user.deleteMany({where:{id:{in:users}}});await db.challenge.deleteMany({where:{id:{in:questions}}});await db.$disconnect();});
@@ -50,6 +50,22 @@ test('viewing a solution permanently removes its XP reward for that account',asy
   await accountRequest('submissions',a,'POST',{id:question.id,reveal:true,requestId:randomUUID()});
   const result=await(await accountRequest('submissions',a,'POST',{id:question.id,answer:{conditions:g.reaction.conditions[0]},requestId:randomUUID()})).json();
   assert.equal(result.correct,true);assert.equal(result.xp,0);assert.equal(result.revealed,true);
+});
+test('account drafts retain worked solutions and review feedback in every mode without changing scores',async()=>{
+  const a=await account();
+  let revision=(await(await accountRequest('progress',a)).json()).revision;
+  for(const mode of ['products','conditions','synthesis'] as const){
+    const question=await(await accountRequest('challenges',a,'POST',{mode,family:'all'})).json();questions.push(question.id);
+    const revealed=await(await accountRequest('submissions',a,'POST',{id:question.id,reveal:true,requestId:randomUUID()})).json();
+    const draft=withGrade(withGrade(newSession(question),revealed,true),{correct:false,message:'Try again',reviewTopics:[{id:'addition-hydrogen',title:'Alkene → alkane'}]});
+    const saved=await accountRequest('progress',a,'PATCH',{revision,sessions:{[mode]:draft},activeMode:mode});
+    assert.equal(saved.status,200);revision=(await saved.json()).revision;
+    const restored=await(await accountRequest('progress',a)).json();
+    assert.deepEqual(restored.sessions[mode].solution,draft.solution);
+    assert.deepEqual(restored.sessions[mode].feedback,draft.feedback);
+    assert.equal(restored.sessions[mode].revealed,true);
+    assert.equal(restored.progress.attempts,0);assert.equal(restored.progress.xp,0);
+  }
 });
 test('sign-out revokes the session and email/password registration is unavailable',async()=>{
   const a=await account();
