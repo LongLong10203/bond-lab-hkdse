@@ -1,6 +1,6 @@
 'use client';
 import { useEffect,useRef,useState, type MouseEvent } from 'react';
-import { ArrowRight,Atom,BookOpen,Check,ChevronLeft,CodeXml,FlaskConical,GitBranch,HelpCircle,LoaderCircle,Settings2,Sparkles,Trophy,X,AlertCircle } from 'lucide-react';
+import { ArrowRight,Atom,BookOpen,ChartNoAxesCombined,Check,ChevronLeft,CodeXml,FlaskConical,GitBranch,HelpCircle,LoaderCircle,Settings2,Sparkles,Trophy,X,AlertCircle } from 'lucide-react';
 import type { ChallengeData,Grade,Mode,Molecule,ReviewTopic } from '@/chemistry/types';
 import { FAMILIES } from '@/chemistry/rules';
 import { displayConditions,isOrganicReagent } from '@/chemistry/condition-options';
@@ -141,7 +141,7 @@ export default function Lab({player}:{coverage:{variants:number;rules:number};pl
       <nav aria-label="Game modes">{MODES.map(m=><button disabled={busy} key={m.id} className={'nav-item '+(mode===m.id?'active':'')} aria-current={mode===m.id?'page':undefined} onClick={()=>chooseMode(m.id)}><m.icon size={19}/><span>{m.name}</span></button>)}</nav>
       <div className="nav-divider"/>
       <button className="nav-item" disabled={busy||accountBusy} onClick={()=>void openCommunity('/library')}><BookOpen size={18}/>Reaction library</button>
-      <button className="nav-item" onClick={()=>{setDialog('progress');setMobileNav(false);}}><Trophy size={18}/>Your progress</button>
+      <button className="nav-item" onClick={()=>{setDialog('progress');setMobileNav(false);}}><ChartNoAxesCombined size={18}/>Your progress</button>
       {player&&<button className="nav-item" disabled={busy||accountBusy} onClick={()=>void openCommunity('/leaderboard')}><Trophy size={18}/>Leaderboard</button>}
       <a className="nav-item repo-link" href="https://github.com/LongLong10203/bond-lab-hkdse" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in a new tab)" onClick={()=>{setMobileNav(false);if(mobileViewport)menuRef.current?.focus();}}><CodeXml size={18}/>GitHub repository</a>
       <button className="help-nav" onClick={()=>{setMobileNav(false);setDialog('help');}}><HelpCircle size={17}/>Help</button>
