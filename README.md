@@ -32,7 +32,7 @@ The [reaction methods guide](output/pdf/Bond-Lab-Reaction-Methods.pdf) provides 
 
 Incorrect answers and worked solutions include **Review this reaction** links to the relevant entry; synthesis solutions include a link for each step. These links appear after feedback, not in the initial question. Opening the library from practice saves the current draft first, and **Back to practice** returns to it. Revealed solutions stay open across navigation, reloads, mode changes, edits and subsequent checks in all three modes. Answer feedback also survives navigation until the answer is edited. Older drafts that only stored the “solution viewed” flag recover their solution automatically. Starting a new challenge clears its predecessor's solution.
 
-The visual PDF carries **© 2026 Long (LongLong10203)** on every page and uses this repository's MIT license. After replacing the PDF, run `python3 scripts/stamp-guide-copyright.py` (requires `pypdf` and `reportlab`) to apply the notice and synchronize the downloadable copy.
+Both PDF guides carry **© 2026 Long (LongLong10203)** and **AGPL-3.0-only** on every page, link to the source repository, and include the full license as an embedded attachment. After replacing either PDF (including recompiling the LaTeX methods guide), run `python3 scripts/stamp-guide-copyright.py` (requires `pypdf` and `reportlab`) to refresh licensing notices, embed the license, and synchronize the downloadable visual guide and public license text.
 
 ## Saved progress and data
 
@@ -121,4 +121,10 @@ The current database connection is configured for production only. Preview deplo
 
 ## License
 
-[MIT](LICENSE). You may use, modify, and share the project while retaining the copyright and license notice. Third-party dependencies retain their own licenses.
+Copyright © 2026 Long (LongLong10203).
+
+Bond Lab's original source code, documentation, and included PDF guides are licensed under the **GNU Affero General Public License, version 3 only** ([AGPL-3.0-only](LICENSE)). You may use, modify, and redistribute them, including commercially, subject to the license. Covered distributions must provide corresponding source under the same license; modified versions offered over a network must prominently offer their corresponding source to users. Preserve copyright and license notices and identify changes. The project is provided without warranty; see the full license for its terms.
+
+The game provides links to the [source repository](https://github.com/LongLong10203/bond-lab-hkdse) and full license. When deploying a modified version, update the source link to the corresponding source for that version, including build instructions. Keep secrets and user data out of the source distribution.
+
+This change applies from the AGPL licensing commit onward. Earlier releases through commit `b672fb8` remain available under their original MIT terms; those permissions are not withdrawn. Third-party dependencies and assets retain their own licenses.
