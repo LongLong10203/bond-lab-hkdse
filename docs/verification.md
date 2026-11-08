@@ -2,10 +2,10 @@
 
 ## Account access update — 7 November 2026
 
-- Exact `syss.edu.hk` and `singyin.edu.hk` email domains are accepted with matching Google hosted-domain claims and verified email ownership.
+- Exact configured school domains are accepted with matching Google hosted-domain claims and verified email ownership. Published examples and fixtures use fictional `school.example` and `academy.example` domains; actual approved domains are private deployment configuration.
 - Server-only `AUTH_ALLOWED_EMAILS` supports exact private exceptions. Tests cover normalisation, malformed inputs, verification, revocation, and rejection of lookalike addresses and aliases.
 - The same eligibility rules cover account creation, sessions, API access, deletion, leaderboard entries and public profiles. Private values are configured separately from source control.
-- All 67 unit/regression tests and 22 local integration tests pass, including Sing Yin profile eligibility and a disposable private exception. The latter uses `TEST_ALLOWED_EMAIL` with an `example.com` fixture and a local server configured with the matching `AUTH_ALLOWED_EMAILS` value.
+- All 67 unit/regression tests and 22 local integration tests pass, including eligibility for a second configured school domain and a disposable private exception. The latter uses `TEST_ALLOWED_EMAIL` with an `example.com` fixture and a local server configured with the matching `AUTH_ALLOWED_EMAILS` value.
 - TypeScript checks and the production build pass. The browser bundle contains no configured private email address.
 
 ## Current release — generator 2026.7
@@ -46,6 +46,13 @@ Generator `2026.4`: **390 enumerated reaction variants, 35 rule variants, 11 fam
 - `./scripts/run run build`: passed after the final source changes, including Next.js TypeScript checks.
 
 New regression coverage includes retaining later synthesis work during correction and reload; immutable automatic final product; missing-input identification; malformed/old saved-state rejection; contextual catalyst/halide equivalence including explicit OH hydrogen; organic co-reactant grading; difficulty rewards and level boundaries; and bounded zigzag arrangement without connectivity changes. New checks cover increasing level costs, stationary loose atoms, stable up/down chains, explicit per-step co-reactant grading, and compatibility with 2026.3 drafts. Existing structural, polymer, valence, conservation and request-size checks remain.
+
+## Private school configuration checks (2026-11-08)
+
+- All 82 unit tests and 23 HTTP/database integration tests passed, along with the production build and TypeScript checks.
+- Domain-policy tests cover exact matching, case normalization, malformed configuration, missing configuration, verified Google Workspace profiles, and private email exceptions. Integration fixtures use fictional domains on a separate local test server.
+- The sign-in page was visually checked with generic school wording and the independent-project notice. Existing permitted domains and the private email exception remain configured only in local and production server settings.
+- Current tracked files, including PDF text and metadata, were checked for identifying school names and domains; none remained. The browser build contains neither the configured domains nor the private allowance-list address. Earlier Git history was not rewritten and can still contain previous references.
 
 ## Accounts, onboarding and rankings
 

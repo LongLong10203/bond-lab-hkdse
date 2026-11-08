@@ -9,5 +9,5 @@ test('default leaderboard names do not use emails or Google names',()=>{
 });
 test('display names accept nicknames and reject emails, markup and oversized input',()=>{
   for(const name of ['Carbon Cat','化學同學','O’Brien','Lab_07'])assert(displayNameSchema.safeParse(name).success);
-  for(const name of ['x','   ','a@syss.edu.hk','<script>alert(1)</script>','a'.repeat(33)])assert(!displayNameSchema.safeParse(name).success);
+  for(const name of ['x','   ','a@school.example','<script>alert(1)</script>','a'.repeat(33)])assert(!displayNameSchema.safeParse(name).success);
 });

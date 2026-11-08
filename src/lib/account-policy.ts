@@ -1,9 +1,17 @@
-export const SCHOOL_DOMAINS = ['syss.edu.hk', 'singyin.edu.hk'];
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const domainPattern = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+// Server-only configuration. Empty or malformed entries never grant access.
+// Use exact domains; wildcard and subdomain matching are intentionally unsupported.
+export function schoolDomains(): string[] {
+  return [...new Set((process.env.AUTH_SCHOOL_DOMAINS ?? '').split(',')
+    .map(domain => domain.trim().toLowerCase())
+    .filter(domain => domain.length <= 253 && domainPattern.test(domain)))];
+}
 
 export function schoolEmail(email: unknown): email is string {
   return typeof email === 'string' && emailPattern.test(email) &&
-    SCHOOL_DOMAINS.includes(email.split('@')[1].toLowerCase());
+    schoolDomains().includes(email.split('@')[1].toLowerCase());
 }
 
 // Server configuration only. Never expose this list through public environment variables.

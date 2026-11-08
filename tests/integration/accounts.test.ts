@@ -12,7 +12,7 @@ after(async()=>{await db.user.deleteMany({where:{id:{in:users}}});await db.chall
 test('private progress rejects anonymous, forged, wrong-domain and unverified accounts',async()=>{
   assert.equal((await accountRequest('progress',null)).status,401);
   assert.equal((await accountRequest('progress',{id:'fake',cookie:'better-auth.session_token=fake'})).status,401);
-  for(const a of [await account('gmail.com'),await account('syss.edu.hk',false)])assert.equal((await accountRequest('progress',a)).status,401);
+  for(const a of [await account('gmail.com'),await account('school.example',false)])assert.equal((await accountRequest('progress',a)).status,401);
 });
 test('drafts survive another browser session, remain private, and reject stale or forged writes',async()=>{
   const a=await account(),b=await account();
@@ -71,5 +71,5 @@ test('sign-out revokes the session and email/password registration is unavailabl
   const a=await account();
   assert.equal((await accountRequest('auth/sign-out',a,'POST',{})).status,200);
   assert.equal((await accountRequest('progress',a)).status,401);
-  assert.notEqual((await accountRequest('auth/sign-up/email',null,'POST',{name:'No',email:'x@syss.edu.hk',password:'test-password-never-used'})).status,200);
+  assert.notEqual((await accountRequest('auth/sign-up/email',null,'POST',{name:'No',email:'x@school.example',password:'test-password-never-used'})).status,200);
 });

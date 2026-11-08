@@ -24,8 +24,8 @@ test('leaderboard is descending by XP, stable at ties, and exposes only public s
   assert.deepEqual(Object.keys(entry).sort(),['id','displayName','xp','level','completed','rank','isYou'].sort());
   const profile=await(await accountRequest(`leaderboard/${a.id}`,b)).json();
   assert.equal(profile.rank,entry.rank);assert.equal(profile.isYou,false);assert.deepEqual(profile.byMode,{products:0,conditions:0,synthesis:0});
-  assert.equal(profile.email,`test-${a.id}@syss.edu.hk`);
-  for(const viewer of [null,wrong,await account('syss.edu.hk',false)])assert.equal((await accountRequest(`leaderboard/${a.id}`,viewer)).status,401);
+  assert.equal(profile.email,`test-${a.id}@school.example`);
+  for(const viewer of [null,wrong,await account('school.example',false)])assert.equal((await accountRequest(`leaderboard/${a.id}`,viewer)).status,401);
   for(const key of ['name','image','drafts','sessions','accounts','attempts','correct','token'])assert.equal(key in profile,false);
   assert.equal((await accountRequest(`leaderboard/${wrong.id}`,a)).status,404);
   assert.equal((await accountRequest('leaderboard?page=-1',a)).status,400);
@@ -35,7 +35,7 @@ test('nickname editing is owner-only, validated and protected against cross-orig
   const a=await account(),b=await account();
   assert.equal((await accountRequest('profile',a,'PATCH',{displayName:'Carbon Cat'})).status,200);
   assert.equal((await(await accountRequest(`leaderboard/${a.id}`,b)).json()).displayName,'Carbon Cat');
-  for(const body of [{displayName:'someone@syss.edu.hk'},{displayName:'<b>hi</b>'},{displayName:'No',userId:b.id}])assert.equal((await accountRequest('profile',a,'PATCH',body)).status,400);
+  for(const body of [{displayName:'someone@school.example'},{displayName:'<b>hi</b>'},{displayName:'No',userId:b.id}])assert.equal((await accountRequest('profile',a,'PATCH',body)).status,400);
   const external=await fetch(`${base}/api/profile`,{method:'PATCH',headers:{Origin:'https://elsewhere.example',Cookie:a.cookie,'Content-Type':'application/json'},body:JSON.stringify({displayName:'Bad'})});assert.equal(external.status,403);
   assert.notEqual((await db.playerProgress.findUniqueOrThrow({where:{userId:b.id}})).displayName,'Carbon Cat');
 });
@@ -50,14 +50,14 @@ test('guest grading returns feedback without XP rewards',async()=>{
   const result=await(await accountRequest('submissions',null,'POST',{id:question.id,answer:{conditions:g.reaction.conditions[0]}})).json();assert.equal(result.correct,true);assert.equal('xp' in result,false);assert.equal('progress' in result,false);
 });
 
-test('Sing Yin accounts can save progress and appear in rankings and profiles',async()=>{
-  const a=await account('singyin.edu.hk');
+test('Accounts from a second configured school domain can save progress and appear in rankings and profiles',async()=>{
+  const a=await account('academy.example');
   assert.equal((await accountRequest('progress',a)).status,200);
   assert.equal((await accountRequest('leaderboard',a)).status,200);
   const response=await accountRequest(`leaderboard/${a.id}`,a);
   assert.equal(response.status,200);
-  assert.equal((await response.json()).email,`test-${a.id}@singyin.edu.hk`);
-  const unverified=await account('singyin.edu.hk',false);
+  assert.equal((await response.json()).email,`test-${a.id}@academy.example`);
+  const unverified=await account('academy.example',false);
   assert.equal((await accountRequest('progress',unverified)).status,401);
 });
 

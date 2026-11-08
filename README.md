@@ -24,7 +24,7 @@ Generator `2026.7` refreshes older unfinished questions because their seeds now 
 
 The molecule editor supports dragging, flexible arrangement, animated changes, and reduced-motion preferences. On mobile, the navigation drawer expands and collapses smoothly, and mode changes animate the workspace while the action bar remains fixed. The menu supports outside-tap and Escape dismissal, and respects reduced-motion preferences. Molecule glyphs retain the same relative sizes and spacing at mobile and desktop widths, including smaller subscripts. Phone drawing pads start with letters around 19 CSS pixels and provide zoom, Pan and Fit controls. Zooming changes only the view, keeping atoms, bonds and subscripts proportional; adding atoms does not automatically shrink the drawing. Selecting an atom or bond tool exits Pan. Desktop uses the original view. Element symbols and adjacent hydrogen labels share a baseline; only counts are subscripted. Carbon–carbon bonds connect condensed CH, CH₂ and CH₃ groups. Bonds from carbon to any other element (including O, N, F, Cl, Br, I and explicit H) attach to the actual element symbols at both ends; hydrogen labels move out of the way without crossing bond lines. Attached labels and branches shift together so vertical, horizontal and diagonal bonds keep their intended directions. Other elements keep bonds anchored to their element symbol; hydrogens placed above or below them have explicit bonds. Charges sit snugly at the upper-right of the final full-size letter, above any subscript, such as NH₄⁺. Parallel double and triple bonds have equal lengths, and condensed carbon groups are centred for symmetric diagonal connections. Selection circles enclose the whole label, and molecule previews and copied reactants are centered using their full visible labels. Signed-in players earn XP for harder questions, and each level requires more XP than the previous one. Guest practice has no XP or levels. Worked solutions remain available; viewing one removes that question’s account XP reward. Answer controls and the highlighted next-challenge button stay in a fixed bar at the bottom of the screen, including when the page is at the top. Space beneath the content adjusts to the bar height. A five-step spotlight tutorial introduces the controls on first play, with a replay option in Help.
 
-Questions are generated from bounded chemistry rules and checked on the server. This is an independent educational project, not an official HKEAA resource. It covers selected HKDSE organic chemistry topics, not the entire syllabus or every valid reaction. See the [chemistry scope](docs/chemistry-scope.md) for supported transformations and limitations. Teacher review is recommended before classroom assessment; game XP does not represent examination marks.
+Questions are generated from bounded chemistry rules and checked on the server. This is an independent educational project, not affiliated with or endorsed by any school or HKEAA. It covers selected HKDSE organic chemistry topics, not the entire syllabus or every valid reaction. See the [chemistry scope](docs/chemistry-scope.md) for supported transformations and limitations. Teacher review is recommended before classroom assessment; game XP does not represent examination marks.
 
 The [reaction methods guide](output/pdf/Bond-Lab-Reaction-Methods.pdf) provides reagent-to-reaction and reaction-to-condition tables, with [editable LaTeX source](output/pdf/reaction-methods/main.tex).
 
@@ -38,7 +38,7 @@ Both PDF guides carry **© 2026 Long (LongLong10203)** and **AGPL-3.0-only** on 
 
 Every new visit starts at a sign-in/register page with Google and guest choices. Guests keep unfinished answers and solved counts in their current browser, without XP or levels. Signed-in players save XP, solved counts, drawings, conditions, and their active game mode to their account. Synthesis drafts retain every step. Returning on another browser restores the account’s saved progress. Guest progress stays separate and is not automatically imported into an account.
 
-Google sign-in accepts verified school accounts with an exact `syss.edu.hk` or `singyin.edu.hk` email domain and a matching Google Workspace domain. Private exceptions can be configured through the server-only `AUTH_ALLOWED_EMAILS` environment variable, using comma-separated exact email addresses. Exceptions still require Google-verified email ownership. Store the values in ignored `.env.local` for local use and as a sensitive Vercel production environment variable before deployment. Only an empty placeholder belongs in `.env.example`. The same access policy applies to sessions, saved progress, rankings, profiles and account deletion. The first successful sign-in creates the account. Accounts, sessions, practice drafts, and scores are stored in PostgreSQL. Answers and XP awards are checked on the server; each challenge awards XP once per account, and viewing its solution removes its reward. Signing out ends the session.
+Google sign-in accepts verified school accounts whose exact email domain appears in the server-only `AUTH_SCHOOL_DOMAINS` setting and matches Google’s Workspace domain claim. Configure a comma-separated list in ignored `.env.local` and private hosting settings; never use a `NEXT_PUBLIC_` variable. There are no built-in school domains. Missing or invalid configuration grants no school-domain access, while explicit private exceptions still work. `school.example` and `academy.example` are fictional documentation/test values, not real login domains. Private exceptions can be configured through the server-only `AUTH_ALLOWED_EMAILS` environment variable, using comma-separated exact email addresses. Exceptions still require Google-verified email ownership. Store the values in ignored `.env.local` for local use and as a sensitive Vercel production environment variable before deployment. Only empty placeholders for both access settings belong in `.env.example`. Restart the local server or redeploy after changing the settings. Configure production domains before deploying this version to preserve existing account access. The same access policy applies to sessions, saved progress, rankings, profiles and account deletion. The first successful sign-in creates the account. Accounts, sessions, practice drafts, and scores are stored in PostgreSQL. Answers and XP awards are checked on the server; each challenge awards XP once per account, and viewing its solution removes its reward. Signing out ends the session.
 
 Account drafts save automatically after a short pause. Wait for “Saved to your account” before leaving. Failed saves show a retry option. A stale tab cannot overwrite a newer saved draft: reload it to continue from the latest saved version. Score reset is not available. To permanently remove your game data, open **My profile → Delete account**, type **DELETE**, and confirm. Deletion removes your profile, saved work, XP, OAuth records, and all sessions; it does not delete your Google account. A session older than one day requires a fresh Google sign-in before deletion. Signing in after deletion creates a new account.
 
@@ -73,7 +73,7 @@ The local database runs on `127.0.0.1:54329`, with database name, username, and 
 
 ### Google sign-in for local testing
 
-Follow [the Google login setup guide](docs/google-login-local.md). Add `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` to the ignored `.env.local` file. Until Google credentials are configured, guest practice remains available and the sign-in button is disabled.
+Follow [the Google login setup guide](docs/google-login-local.md). Add `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `AUTH_SCHOOL_DOMAINS` to the ignored `.env.local` file. Until Google credentials are configured, guest practice remains available and the sign-in button is disabled.
 
 ## Development checks
 
@@ -83,11 +83,20 @@ npm run typecheck
 npm run build
 ```
 
-With both the app and its development database running, also run:
+Integration account fixtures use only fictional domains. Keep the local database running, build the app, then start a separate test server in another terminal:
 
 ```sh
-npm run test:integration
+npm run build
+AUTH_SCHOOL_DOMAINS=school.example,academy.example AUTH_ALLOWED_EMAILS=fixture@example.com BETTER_AUTH_URL=http://localhost:3100 npm start -- --port 3100
 ```
+
+Run the checks against that server:
+
+```sh
+TEST_BASE_URL=http://localhost:3100 TEST_ALLOWED_EMAIL=fixture@example.com npm run test:integration
+```
+
+These overrides apply only to the test-server process. They do not change `.env.local`, the normal localhost preview, or production access. Never configure fictional test domains on the live site.
 
 Unit tests do not require a database. Integration tests exercise challenge creation, grading, account privacy, session revocation, saved drafts, account deletion, login retries, concurrent awards, retry handling, leaderboard ordering and privacy, nickname ownership, tutorial completion, and guest grading without XP through the local HTTP API, then remove their temporary records. Account tests require the same `BETTER_AUTH_SECRET` as the local server. They create local session fixtures; they do not simulate a real successful Google login. Set `TEST_BASE_URL` if the local app uses a different port. The integration runner rejects non-local URLs.
 

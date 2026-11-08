@@ -7,7 +7,7 @@ config({path:'.env.local',quiet:true,override:true});config({quiet:true});
 export const base=process.env.TEST_BASE_URL??'http://localhost:3000';
 if(!['127.0.0.1','localhost'].includes(new URL(base).hostname)||!['127.0.0.1','localhost'].includes(new URL(process.env.DATABASE_URL!).hostname))throw Error('Account tests require a local app and local database.');
 // Test fixtures only: no login bypass is exposed by the application.
-export async function fixtureAccount(domain='syss.edu.hk',verified=true){
+export async function fixtureAccount(domain='school.example',verified=true){
   const id=randomUUID(),token=randomUUID();
   await db.user.create({data:{id,name:'Local test student',email:`test-${id}@${domain}`,emailVerified:verified}});
   await db.session.create({data:{id:randomUUID(),userId:id,token,expiresAt:new Date(Date.now()+3600000)}});
