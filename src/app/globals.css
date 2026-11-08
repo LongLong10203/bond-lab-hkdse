@@ -16,9 +16,7 @@
 @media(max-width:660px){
   .elements button,.bond-tools button{width:36px;height:40px}
   .elements{gap:2px}
-  .drawing-canvas text{font-size:28px}
-  .drawing-canvas text tspan{font-size:20px}
-  .drawing-canvas text tspan[dy]{font-size:16px}
+  /* SVG glyph sizes come from the shared label layout, including subscripts. */
 }
 /* Compact practice workspace. */
 .compact-lab .brand{margin-bottom:40px}.compact-lab .help-nav{margin-top:auto}.compact-lab .main-content{padding-top:24px}
@@ -124,4 +122,54 @@ select:not([multiple]):not([size]) {
 }
 @media (forced-colors: active) {
   select:not([multiple]):not([size]) { appearance: auto; -webkit-appearance: auto; background-image: none; }
+}
+
+.mobile-nav-backdrop { display: none; }
+.mobile-drawing-view { display: none; }
+@media (max-width: 660px) {
+  .mobile-drawing-view { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  .mobile-drawing-view button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; border: 1px solid #dce5cf; border-radius: 7px; font-size: 12px; }
+  .mobile-drawing-view button[aria-pressed=true] { background: #e4eed5; border-color: #97b576; color: #3f5b31; }
+  .mobile-drawing-view button:last-child { margin-left: auto; }
+  .compact-lab .drawing-canvas { height: 320px; min-height: 320px; aspect-ratio: auto; }
+  .compact-lab .drawing-canvas.panning, .compact-lab .drawing-canvas.panning g[role=button] { cursor: grab; }
+}
+.menu-icon { position: relative; display: block; width: 21px; height: 18px; }
+.menu-icon > span { position: absolute; left: 0; width: 21px; height: 2px; border-radius: 2px; background: currentColor; transition: transform 220ms ease, opacity 160ms ease; }
+.menu-icon > span:nth-child(1) { top: 2px; }
+.menu-icon > span:nth-child(2) { top: 8px; }
+.menu-icon > span:nth-child(3) { top: 14px; }
+.mobile-menu[aria-expanded=true] .menu-icon > span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.mobile-menu[aria-expanded=true] .menu-icon > span:nth-child(2) { opacity: 0; transform: scaleX(.4); }
+.mobile-menu[aria-expanded=true] .menu-icon > span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+@media (max-width: 900px) {
+  .compact-lab .mobile-menu { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+  .compact-lab .sidebar {
+    display: flex; top: 65px; overflow-y: auto; max-width: calc(100vw - 48px);
+    visibility: hidden; opacity: 0; pointer-events: none;
+    clip-path: inset(0 100% 0 0 round 0 14px 14px 0); transform: translateX(-12px);
+    transition: clip-path 260ms cubic-bezier(.2,.8,.2,1), transform 260ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease, visibility 0s linear 260ms;
+  }
+  .compact-lab .sidebar.nav-open {
+    visibility: visible; opacity: 1; pointer-events: auto;
+    clip-path: inset(0 0 0 0 round 0 14px 14px 0); transform: translateX(0);
+    transition-delay: 0s;
+  }
+  .mobile-nav-backdrop {
+    display: block; position: fixed; inset: 65px 0 0; z-index: 19; background: #26332c38;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 220ms ease, visibility 0s linear 260ms;
+  }
+  .mobile-nav-backdrop.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
+  .mobile-nav-backdrop:active { transform: none !important; }
+  .mode-content { animation: mobile-mode-enter 240ms ease-out both; }
+  .mode-content .workbench { animation: mobile-workbench-enter 240ms ease-out; }
+  .mode-title { animation: mobile-title-enter 200ms ease-out both; }
+}
+@keyframes mobile-mode-enter { from { opacity: .25; } to { opacity: 1; } }
+@keyframes mobile-workbench-enter { from { transform: translateY(10px); } to { transform: none; } }
+@keyframes mobile-title-enter { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .menu-icon > span, .compact-lab .sidebar, .mobile-nav-backdrop { transition: none; }
+  .mode-content, .mode-content .workbench, .mode-title { animation: none; }
 }

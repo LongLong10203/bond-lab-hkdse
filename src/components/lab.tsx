@@ -1,6 +1,6 @@
 'use client';
 import { useEffect,useRef,useState, type MouseEvent } from 'react';
-import { ArrowRight,Atom,BookOpen,Check,ChevronLeft,FlaskConical,GitBranch,HelpCircle,LoaderCircle,Menu,Settings2,Sparkles,Trophy,X,AlertCircle } from 'lucide-react';
+import { ArrowRight,Atom,BookOpen,Check,ChevronLeft,FlaskConical,GitBranch,HelpCircle,LoaderCircle,Settings2,Sparkles,Trophy,X,AlertCircle } from 'lucide-react';
 import type { ChallengeData,Grade,Mode,Molecule,ReviewTopic } from '@/chemistry/types';
 import { FAMILIES } from '@/chemistry/rules';
 import { displayConditions,isOrganicReagent } from '@/chemistry/condition-options';
@@ -23,6 +23,31 @@ export default function Lab({player}:{coverage:{variants:number;rules:number};pl
   const [error,setError]=useState(''),[inputMessage,setInputMessage]=useState(''),[accountBusy,setAccountBusy]=useState(false);
   const [dialog,setDialog]=useState<'progress'|'help'|null>(null),[mobileNav,setMobileNav]=useState(false),[levelUp,setLevelUp]=useState<number|null>(null);
   const [replayTour,setReplayTour]=useState(false);
+  const [mobileViewport,setMobileViewport]=useState(false);
+  const menuRef=useRef<HTMLButtonElement>(null);
+  const navigationRef=useRef<HTMLElement>(null);
+  useEffect(()=>{
+    const media=window.matchMedia('(max-width: 900px)');
+    const sync=()=>{setMobileViewport(media.matches);if(!media.matches)setMobileNav(false);};
+    sync();media.addEventListener('change',sync);
+    return()=>media.removeEventListener('change',sync);
+  },[]);
+  useEffect(()=>{
+    if(!mobileViewport||!mobileNav)return;
+    const overflow=document.body.style.overflow;
+    document.body.style.overflow='hidden';
+    navigationRef.current?.querySelector<HTMLButtonElement>('.nav-item.active')?.focus({preventScroll:true});
+    const close=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){setMobileNav(false);menuRef.current?.focus();}
+      if(event.key==='Tab'){
+        const controls=[menuRef.current,...Array.from(navigationRef.current?.querySelectorAll<HTMLElement>('a,button:not(:disabled)')??[])].filter((node):node is HTMLElement=>!!node);
+        const current=controls.indexOf(document.activeElement as HTMLElement);
+        event.preventDefault();controls[(current+(event.shiftKey?-1:1)+controls.length)%controls.length]?.focus();
+      }
+    };
+    window.addEventListener('keydown',close);
+    return()=>{document.body.style.overflow=overflow;window.removeEventListener('keydown',close);};
+  },[mobileViewport,mobileNav]);
   const closeRef=useRef<HTMLButtonElement>(null),requestId=useRef(0),submitLock=useRef(false);
   const session=sessions[mode],question=session?.question,active=MODES.find(m=>m.id===mode)!,level=levelFor(progress.xp);
   const [solutionError,setSolutionError]=useState(''),[restoreAttempt,setRestoreAttempt]=useState(0);
@@ -61,7 +86,7 @@ export default function Lab({player}:{coverage:{variants:number;rules:number};pl
   },[mode,family,generation,ready]);
   useEffect(()=>{if(!dialog)return;const previous=document.activeElement as HTMLElement|null;closeRef.current?.focus();const handle=(e:KeyboardEvent)=>{if(e.key==='Escape')setDialog(null);if(e.key==='Tab'){const all=Array.from(document.querySelectorAll<HTMLElement>('.dialog button, .dialog a, .dialog input')).filter(el=>!el.hasAttribute('disabled'));const first=all[0],last=all.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}};document.addEventListener('keydown',handle);return()=>{document.removeEventListener('keydown',handle);previous?.focus();};},[dialog]);
   const update=(fn:(s:PracticeSession)=>PracticeSession)=>{setSessions(previous=>previous[mode]?{...previous,[mode]:fn(previous[mode]!)}:previous);setInputMessage('');};
-  const chooseMode=(next:Mode)=>{if(busy)return;setMode(next);setFamily(sessions[next]?.question.family??'all');setMobileNav(false);};
+  const chooseMode=(next:Mode)=>{if(busy)return;setMode(next);setFamily(sessions[next]?.question.family??'all');setMobileNav(false);if(mobileViewport)menuRef.current?.focus();};
   const nextChallenge=()=>{if(busy)return;setSessions(previous=>{const next={...previous};delete next[mode];return next;});setGeneration(g=>g+1);};
   const changeStep=(index:number)=>update(s=>({...s,activeStep:index}));
   const changeDrawing=(molecule:Molecule)=>update(s=>mode==='synthesis'?editStep(s,s.activeStep,{molecule}):{...s,drawing:molecule,feedback:null});
@@ -110,18 +135,19 @@ export default function Lab({player}:{coverage:{variants:number;rules:number};pl
   const feedback=session?.feedback;
   const workedSolution=session?.solution;
   return <div className="app-shell compact-lab">
-    <aside inert={!!dialog||showTour} className={'sidebar '+(mobileNav?'nav-open':'')}>
+    <button className={'mobile-nav-backdrop '+(mobileNav?'is-open':'')} aria-label="Close navigation" aria-hidden={!mobileViewport||!mobileNav} tabIndex={-1} onClick={()=>{setMobileNav(false);menuRef.current?.focus();}}/>
+    <aside ref={navigationRef} id="practice-navigation" inert={!!dialog||showTour||(mobileViewport&&!mobileNav)} className={'sidebar '+(mobileNav?'nav-open':'')}>
       <a href="/" className="brand" aria-label="Bond Lab home"><span className="brand-mark"><Atom size={27}/></span><span>BOND<span className="brand-light">LAB</span></span></a>
       <nav aria-label="Game modes">{MODES.map(m=><button disabled={busy} key={m.id} className={'nav-item '+(mode===m.id?'active':'')} aria-current={mode===m.id?'page':undefined} onClick={()=>chooseMode(m.id)}><m.icon size={19}/><span>{m.name}</span></button>)}</nav>
       <div className="nav-divider"/>
       <button className="nav-item" disabled={busy||accountBusy} onClick={()=>void openCommunity('/library')}><BookOpen size={18}/>Reaction library</button>
       <button className="nav-item" onClick={()=>{setDialog('progress');setMobileNav(false);}}><Trophy size={18}/>Your progress</button>
       {player&&<button className="nav-item" disabled={busy||accountBusy} onClick={()=>void openCommunity('/leaderboard')}><Trophy size={18}/>Leaderboard</button>}
-      <button className="help-nav" onClick={()=>setDialog('help')}><HelpCircle size={17}/>Help</button>
+      <button className="help-nav" onClick={()=>{setMobileNav(false);setDialog('help');}}><HelpCircle size={17}/>Help</button>
     </aside>
     <main inert={!!dialog||showTour} className="main">
-      <header className="topbar"><button className="mobile-menu" aria-label="Toggle navigation" aria-expanded={mobileNav} onClick={()=>setMobileNav(!mobileNav)}><Menu size={21}/></button><h1 data-tour="mode" className="mode-title">{active.name}</h1><div className="profile-progress">{player&&<button className="level-badge" aria-label={`Level ${level.level}, ${progress.xp} XP. View progress`} onClick={()=>setDialog('progress')}><Sparkles size={17}/><span>Level {level.level}<small>{progress.xp} XP</small></span><span className="level-meter" role="progressbar" aria-label="Progress to next level" aria-valuenow={level.withinLevel} aria-valuemin={0} aria-valuemax={level.required}><i style={{width:`${level.withinLevel/level.required*100}%`}}/></span></button>}<div className="account-controls">{player?<><button className="avatar" aria-label="View my profile" title="Your profile" disabled={busy||accountBusy} onClick={()=>void openCommunity('/profile')}>{(player.name||player.email).slice(0,1).toUpperCase()}</button><button className="account-button" disabled={busy||accountBusy||!ready} onClick={signOut}>Sign out</button></>:<button className="account-button" disabled={busy} onClick={signIn}>Sign in / register</button>}</div></div></header>
-      <div className="main-content">
+      <header className="topbar"><button ref={menuRef} className="mobile-menu" aria-label="Toggle navigation" aria-controls="practice-navigation" aria-expanded={mobileNav} onClick={()=>setMobileNav(!mobileNav)}><span className="menu-icon" aria-hidden="true"><span/><span/><span/></span></button><h1 key={mode} data-tour="mode" className="mode-title">{active.name}</h1><div className="profile-progress">{player&&<button className="level-badge" aria-label={`Level ${level.level}, ${progress.xp} XP. View progress`} onClick={()=>setDialog('progress')}><Sparkles size={17}/><span>Level {level.level}<small>{progress.xp} XP</small></span><span className="level-meter" role="progressbar" aria-label="Progress to next level" aria-valuenow={level.withinLevel} aria-valuemin={0} aria-valuemax={level.required}><i style={{width:`${level.withinLevel/level.required*100}%`}}/></span></button>}<div className="account-controls">{player?<><button className="avatar" aria-label="View my profile" title="Your profile" disabled={busy||accountBusy} onClick={()=>void openCommunity('/profile')}>{(player.name||player.email).slice(0,1).toUpperCase()}</button><button className="account-button" disabled={busy||accountBusy||!ready} onClick={signOut}>Sign out</button></>:<button className="account-button" disabled={busy} onClick={signIn}>Sign in / register</button>}</div></div></header>
+      <div key={mode} className="main-content mode-content">
         <div className="account-note"><span>{player?'Account practice':'Guest practice · Drawings saved on this device'}</span>{player&&<span role="status">{saveStatus}</span>}</div>
         {saveError&&<div className="error-banner" role="alert"><span>{saveError}</span>{ready&&<button onClick={()=>void flush()}>Retry save</button>}<button onClick={()=>window.location.reload()}>Reload saved progress</button></div>}
         <div className="workbench-top"><span className="question-meta">{question&&<><span className="difficulty-label">{question.difficulty}</span>{player&&<span>+{question.reward} XP</span>}</>}</span>{mode!=='synthesis'&&<label className="family-label">Focus<select aria-label="Reaction family" value={family} disabled={busy||loading} onChange={e=>setFamily(e.target.value)}>{FAMILIES.map(f=><option key={f.id} value={f.id}>{f.label}</option>)}</select></label>}{mode==='synthesis'&&!player&&<span className="save-note">{storageWarning?'Browser saving unavailable':'Draft saved on this device'}</span>}</div>
