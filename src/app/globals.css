@@ -125,10 +125,7 @@ select:not([multiple]):not([size]) {
 }
 
 .mobile-nav-backdrop { display: none; }
-.license-notice { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 16px; padding: 20px 24px; color: #637257; font-size: 11px; line-height: 1.6; text-align: center; }
-.license-notice a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 3px; }
-.app-shell ~ .license-notice { margin-left: var(--sidebar); padding-bottom: 160px; }
-@media (max-width: 900px) { .app-shell ~ .license-notice { margin-left: 0; } }
+.repo-link { min-height: 44px; text-decoration: none; }
 .mobile-drawing-view { display: none; }
 @media (max-width: 660px) {
   .mobile-drawing-view { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--paper); }
